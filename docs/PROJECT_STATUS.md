@@ -21,7 +21,7 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 7 suites and 25 deterministic tests pass. |
+| `npm run test:unit` | Passing | 8 suites and 36 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
 | `npm run test:e2e` | Passing | 22 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
@@ -36,7 +36,7 @@ Last reviewed: 2026-09-21
 
 ## Highest-priority stabilization work
 
-1. Replace authentication and add server-side family authorization before any public deployment.
+1. Replace prototype password lookup with hashed credentials and server sessions, then add family-scoped authorization before any public deployment.
 2. Validate API inputs and define consistent error responses.
 3. Complete the transaction-ledger model so every balance change records before/after balances atomically.
 4. Make the live-Mongo Playwright project isolated and safe enough to run as a scheduled integration gate.
@@ -45,6 +45,8 @@ Last reviewed: 2026-09-21
 ## Product/engineering observations
 
 - The prototype proves the main family interaction, but its present authentication and authorization are development-only.
+- Authentication now rejects non-string and oversized credentials, no longer returns password fields, and the unused anonymous user-enumeration routes have been removed. Password storage and server-side sessions still need redesign.
+- The production-reachable transaction cleanup route was removed; Mongo integration setup now owns fixture cleanup directly.
 - The mock-client seam is valuable and should remain, ideally behind application-level ports rather than browser transport details.
 - Parent adjustment, request approval, and interest accrual need one consistent transaction-ledger policy.
 - Responsive web/PWA is the cheapest way to validate the child experience before committing to a separate native app.

@@ -1,5 +1,5 @@
 import IClient from "@models/client";
-import {LoginData} from "@contexts/AuthContext";
+import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {Option} from "@models/option";
 import {IUser} from "@models/user";
 import {ChildAccount} from "@models/child-account";
@@ -8,27 +8,9 @@ import type {DeleteResponse, UpdateOneResponse} from "@mongoDataApiHelper";
 
 export default class MongoDbClient implements IClient {
 
-    async auth(userData: LoginData, options?: Option | undefined): Promise<IUser | null> {
+    async auth(userData: LoginData, options?: Option | undefined): Promise<AuthenticatedAccount | null> {
         try {
-            return await this.post<IUser | ChildAccount>(`/api/auth`, userData);
-        } catch (e) {
-            console.log(e);
-            return null;
-        }
-    }
-
-    async getUser(userId: string, options?: Option | undefined): Promise<IUser | null> {
-        try {
-            return await this.get<IUser>(`/api/user/${userId}`);
-        } catch (e) {
-            console.log(e);
-            return null;
-        }
-    }
-
-    async getUsers(options?: Option | undefined): Promise<IUser[] | null> {
-        try{
-            return await this.get<IUser[]>(`/api/user`);
+            return await this.post<AuthenticatedAccount>(`/api/auth`, userData);
         } catch (e) {
             console.log(e);
             return null;
@@ -43,17 +25,6 @@ export default class MongoDbClient implements IClient {
         } catch (e) {
             console.log(e);
             return null;
-        }
-    }
-
-    addUser(userData: IUser, options?: Option | undefined): Promise<IUser|void> {
-        try{
-            const response = this.post<IUser>(`/api/user`, userData);
-            if(!response) return Promise.resolve();
-            return response as Promise<IUser>;
-        }catch (e){
-            console.log(e);
-            return Promise.resolve();
         }
     }
 

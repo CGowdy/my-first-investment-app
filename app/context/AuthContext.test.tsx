@@ -10,9 +10,6 @@ const mockLoginData = { username: 'testUser', password: 'password' };
 // Mock implementation for ClientContext
 const mockClientContext = {
     auth: jest.fn(),
-    getUser: jest.fn(),
-    getUsers: jest.fn(),
-    addUser: jest.fn(),
     addChildUser: jest.fn(),
     updateChildAccount: jest.fn(),
     deleteChildAccount: jest.fn(),

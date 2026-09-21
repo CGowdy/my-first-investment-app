@@ -1,6 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {baseUrl, createMongoChildRequest, loginAsMongoParent, openMongoChildRequests} from '@playwrightHelpers';
-import type {DeleteResponse} from "@mongoDataApiHelper";
+import {createMongoChildRequest, loginAsMongoParent, openMongoChildRequests} from '@playwrightHelpers';
 
 test.describe('Mongo Pending Requests', ()=>{
     let currentTransactionId = '';
@@ -9,13 +8,6 @@ test.describe('Mongo Pending Requests', ()=>{
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMongoParent(page);
         await openMongoChildRequests(page);
-    });
-    test.afterEach(async ({page, request}) => {
-        //Cleanup
-        const deleted = await request.delete(`${await baseUrl()}/api/transactions/test/${currentTransactionId}`);
-        expect(deleted.ok(), 'should cleanup transaction properly').toBeTruthy();
-        expect(await deleted.json() as unknown as DeleteResponse, 'should expect 1 item deleted').toEqual({deletedCount: 1});
-
     });
     test('should render', async ({page, request}) => {
         const requestComponent = page.getByText(`Request $10Reason: ${currentTransactionId}`);

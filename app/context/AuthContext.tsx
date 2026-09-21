@@ -1,19 +1,13 @@
 'use client'
 import React, {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {ClientContext} from "./ClientContext";
-import {IUser} from "@models/user";
-import {ChildAccount} from "@models/child-account";
-
-export interface LoginData {
-    username: string,
-    password: string
-}
+import type {AuthenticatedAccount, LoginData} from "@models/auth";
 
 export const useAuth = () => useContext(AuthContext);
 export const AuthContext = createContext<{
     login: (userData: LoginData) => Promise<boolean>;
     logout: () => void;
-    user: IUser | ChildAccount | null;
+    user: AuthenticatedAccount | null;
 } | null>(null);
 
 interface AuthProviderProps {
@@ -21,7 +15,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({children}) => {
-    const [user, setUser] = useState<IUser | null>(null);
+    const [user, setUser] = useState<AuthenticatedAccount | null>(null);
     const clientContext = useContext(ClientContext)!;
 
     // Check localStorage for userId

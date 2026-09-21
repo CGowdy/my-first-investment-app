@@ -1,12 +1,12 @@
 import {Locator, expect, test} from '@playwright/test';
-import {configMockEnvironment, configMongoEnvironment, loginAsMockChild, loginAsMockParent, loginAsMongoChild, loginAsMongoParent} from "@playwrightHelpers";
+import {configMongoEnvironment, loginAsMongoChild} from "@playwrightHelpers";
 
 test.describe('Mongo Spend Area', ()=>{
     let accountBalance: number;
     let ifISpendInput: Locator;
     test.beforeEach(async ({page}) => {
-        await configMockEnvironment(page);
-        await loginAsMockChild(page);
+        await configMongoEnvironment(page);
+        await loginAsMongoChild(page);
         accountBalance = Number.parseFloat(await page.getByTestId('account-balance').textContent()??"0");
         ifISpendInput = await page.getByLabel('If I spend');
     });

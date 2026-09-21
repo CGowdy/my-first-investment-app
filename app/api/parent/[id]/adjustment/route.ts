@@ -22,9 +22,7 @@ export async function POST(req: Request){
 		});
 		if(!childAccount?.document) throw new Error('Child not found');
 		if(!childAccount.document._id) throw new Error('Child does not have an id');
-		console.log(childAccount.document);
 		childAccount.document.balance += requestData.amount;
-		console.log(childAccount.document);
 		const updateResult = await updateOneById<ChildAccount>(Collection.ChildAccounts,
 			childAccount.document._id,
 			{

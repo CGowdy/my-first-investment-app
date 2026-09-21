@@ -1,25 +1,32 @@
 import dotenv from "dotenv";
-import {LoginData} from "@contexts/AuthContext";
 import {aggregate, Collection, findOne, insertOne, updateOneById} from "@mongoDataApiHelper";
 import {ChildAccount} from "@models/child-account";
 import {IUser} from "@models/user";
 import {getAccruedInterest} from "@models/balance";
 import {ApprovalStatus, Transaction} from "@models/transaction";
+import type {ApiError} from "@models/auth";
+import {parseLoginData, withoutPassword} from "./security";
 
 dotenv.config();
 
+function authenticationError(status: number, code: string, message: string): Response {
+    const body: ApiError = {error: {code, message}};
+    return Response.json(body, {status});
+}
+
 export const POST = async (req: Request) => {
-    const loginData = await req.json() as LoginData;
     try {
+        const loginData = parseLoginData(await req.json());
+        if (!loginData) {
+            return authenticationError(400, "INVALID_LOGIN_REQUEST", "Invalid login request");
+        }
+
         const userFindResult = await findOne<IUser>(Collection.Users, {
                 username: loginData.username,
                 password: loginData.password
             });
         if (!userFindResult?.document) {
-            return new Response(null,{
-                status:404,
-                statusText:'User not found'
-            });
+            return authenticationError(401, "INVALID_CREDENTIALS", "Invalid username or password");
         }
         const foundUser = userFindResult.document;
         if (!foundUser._id) throw new Error('User does not have an id');
@@ -29,7 +36,7 @@ export const POST = async (req: Request) => {
         if(!childAccount){
             //Not child account therefore this is a parent account
             //Return the parent account
-            return Response.json(userFindResult.document)
+            return Response.json(withoutPassword(userFindResult.document))
         }else{
             //Update child balance for the child account
             //Check if the latestBalance.date is today
@@ -61,17 +68,14 @@ export const POST = async (req: Request) => {
                 });
                 if(!updateResult) throw new Error('Failed to update account');
                 //Return the child account
-                return Response.json(updatedAccount);
+                return Response.json(withoutPassword(updatedAccount));
             }
 
-            return Response.json(childAccount);
+            return Response.json(withoutPassword(childAccount));
         }
 
     } catch (error) {
-        console.log(`auth route error: ${JSON.stringify(error)}`)
-        return new Response(null,{
-            status:500,
-            statusText:`Server error: ${JSON.stringify(error)}`
-        });
+        console.error("Authentication request failed");
+        return authenticationError(500, "AUTHENTICATION_FAILED", "Authentication failed");
     }
 }

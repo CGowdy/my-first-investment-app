@@ -1,5 +1,5 @@
 import IClient from '@models/client';
-import {LoginData} from "@contexts/AuthContext";
+import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {ChildAccount} from "@models/child-account";
 import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
@@ -21,29 +21,17 @@ export const mockRequests: Transaction[] = []
 
 export default class MockClient implements IClient {
 
-    async auth(userData: LoginData): Promise<IUser | ChildAccount | null> {
+    async auth(userData: LoginData): Promise<AuthenticatedAccount | null> {
         const user = mockUsers.find(user => user.username === userData.username && user.password === userData.password);
         const child = mockChildren.find(child => child.username === userData.username && child.password === userData.password);
-        return Promise.resolve({...user, ...child} as ChildAccount);
-    }
-
-    //User CRUD
-    async getUser(userId:string): Promise<IUser | null> {
-        const user = mockUsers.find(user => user._id === userId);
-        return Promise.resolve(user || null);
-    }
-
-    getUsers(): Promise<IUser[]|null> {
-        return Promise.resolve(mockUsers);
+        if (!user) return null;
+        const authenticated = {...user, ...child};
+        const {password: _password, ...safeAccount} = authenticated;
+        return safeAccount;
     }
 
     updateChildAccount(user: IUser): Promise<ChildAccount|null>{
         return Promise.resolve(mockChildren.find(child => child._id === user._id)??null);
-    }
-
-    addUser(userData: IUser): Promise<IUser | void>{
-        mockUsers.push(userData);
-        return Promise.resolve(userData);
     }
 
     //Child CRUD
