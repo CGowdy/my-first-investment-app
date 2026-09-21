@@ -3,27 +3,23 @@ import {configMockEnvironment, configMongoEnvironment, loginAsMockChild, loginAs
 
 test.describe('Mock Save Area', ()=>{
     let accountBalance: number;
-    let ifISpendInput: Locator;
+    let ifISaveInput: Locator;
     test.beforeEach(async ({page}) => {
         await configMockEnvironment(page);
         await loginAsMockChild(page);
         accountBalance = Number.parseFloat(await page.getByTestId('account-balance').textContent()??"0");
-        ifISpendInput = await page.getByLabel('If I save');
+        ifISaveInput = await page.getByLabel('If I save');
     });
     test('should have nothing by default', async ({page}) => {
 
-        await expect(ifISpendInput).toBeVisible();
-        expect(await ifISpendInput.inputValue()).toBe('');
+        await expect(ifISaveInput).toBeVisible();
+        expect(await ifISaveInput.inputValue()).toBe('');
 
-        await expect(page.getByLabel('then my account will have').last()).toBeVisible();
-        await expect(page.getByLabel('then my account will have').last()).toBeDisabled();
-        expect(await page.getByLabel('then my account will have').last().inputValue()).toBe(accountBalance.toString());
+        await expect(page.getByTestId('save-resulting-balance')).toHaveText(`$${accountBalance}`);
     });
 
     test('should update when entering a value', async ({page}) => {
-        await ifISpendInput.fill('15');
-        await expect(page.getByLabel('then my account will have').last()).toBeVisible();
-        await expect(page.getByLabel('then my account will have').last()).toBeDisabled();
-        expect(await page.getByLabel('then my account will have').last().inputValue()).toBe((accountBalance + 15).toString());
+        await ifISaveInput.fill('15');
+        await expect(page.getByTestId('save-resulting-balance')).toHaveText(`$${accountBalance + 15}`);
     });
 });

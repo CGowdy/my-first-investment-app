@@ -13,6 +13,27 @@ const calculateDailyEarnings = (balance: number, yearlyInterestRate: number): nu
     return balance * dailyInterestRate;
 };
 
+type ProjectionResultProps = {
+    label: string;
+    value: string;
+    testId: string;
+    tone: 'spend' | 'save';
+};
+
+const projectionToneClasses = {
+    spend: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200',
+    save: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-200',
+};
+
+function ProjectionResult({label, value, testId, tone}: ProjectionResultProps) {
+    return (
+        <div className={`rounded-lg border px-3 py-2 ${projectionToneClasses[tone]}`}>
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">{label}</div>
+            <output data-testid={testId} className="block text-lg font-semibold">${value}</output>
+        </div>
+    );
+}
+
 export default function ChildDashboard() {
     const {user} = useContext(AuthContext)!;
     const [pretendSpent, setPretendSpent] = useState("");
@@ -99,29 +120,31 @@ export default function ChildDashboard() {
                 <div className={'prose mb-2 flex max-w-none flex-col rounded-2xl bg-white px-4 py-5 text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6'}>
                     <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Pretend Zone</h2>
                     <p className={'text-sm'}>This area can be used to pretend you spent some of your money or put more money in.</p>
-                    <div className={'flex flex-col lg:flex-row'}>
-                        <div className={"w-full mb-4"}>
-                            <LabelledInput name="if-i-spend" className={'rounded-b-none '} label={"If I spend"} inputText={pretendSpent.toString()} onInputChanged={setPretendSpent}
-                                           headerDisplay={"$"}
-                                           placeholder={"Enter amount here"}/>
-                            <LabelledInput name="then-my-account-will-have" className={'rounded-none '} label={"then my account will have"}
-                                           inputText={(childAccount.balance - Number(pretendSpent)).toString()} onInputChanged={() => {
-                            }} disabled={true} headerDisplay={"$"}/>
-                            <LabelledInput name='everyday-my-money-would-create' className={'rounded-t-none '} label={"everyday my money would create "}
-                                           inputText={calculateDailyEarnings(childAccount.balance - Number(pretendSpent), childAccount.interest / 100).toFixed(2)} onInputChanged={() => {
-                            }} disabled={true} headerDisplay={"$"}/>
-                        </div>
-                        <div className={'w-full lg:ml-2'}>
-                            <LabelledInput name="if-i-save" className={'rounded-b-none'} label={"If I save"} inputText={pretendAdded.toString()} onInputChanged={setPretendAdded}
-                                           headerDisplay={"$"}
-                                           placeholder={"Enter amount here"}/>
-                            <LabelledInput name='then-my-account-will-have-more' className={'rounded-none'} label={"then my account will have"}
-                                           inputText={(childAccount.balance + Number(pretendAdded)).toString()} onInputChanged={() => {
-                            }} disabled={true} headerDisplay={"$"}/>
-                            <LabelledInput name='everyda-my-money-would-create-more' className={'rounded-t-none'} label={"everyday my money would create "}
-                                           inputText={calculateDailyEarnings(childAccount.balance + Number(pretendAdded), childAccount.interest / 100).toFixed(2)} onInputChanged={() => {
-                            }} disabled={true} headerDisplay={"$"}/>
-                        </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <section aria-labelledby="spend-scenario-heading" className="rounded-xl border border-amber-300 bg-amber-50/50 p-3 dark:border-amber-400/30 dark:bg-amber-400/5">
+                            <h3 id="spend-scenario-heading" className="mb-3 text-base font-semibold text-amber-800 dark:text-amber-200">Spend scenario</h3>
+                            <div className="space-y-3">
+                                <LabelledInput name="if-i-spend" label="If I spend" inputText={pretendSpent} onInputChanged={setPretendSpent}
+                                               headerDisplay="$" placeholder="Enter amount here"/>
+                                <ProjectionResult label="Then my account will have" value={(childAccount.balance - Number(pretendSpent)).toString()}
+                                                  testId="spend-resulting-balance" tone="spend"/>
+                                <ProjectionResult label="Every day my money would create"
+                                                  value={calculateDailyEarnings(childAccount.balance - Number(pretendSpent), childAccount.interest / 100).toFixed(2)}
+                                                  testId="spend-daily-growth" tone="spend"/>
+                            </div>
+                        </section>
+                        <section aria-labelledby="save-scenario-heading" className="rounded-xl border border-sky-300 bg-sky-50/50 p-3 dark:border-sky-400/30 dark:bg-sky-400/5">
+                            <h3 id="save-scenario-heading" className="mb-3 text-base font-semibold text-sky-800 dark:text-sky-200">Save scenario</h3>
+                            <div className="space-y-3">
+                                <LabelledInput name="if-i-save" label="If I save" inputText={pretendAdded} onInputChanged={setPretendAdded}
+                                               headerDisplay="$" placeholder="Enter amount here"/>
+                                <ProjectionResult label="Then my account will have" value={(childAccount.balance + Number(pretendAdded)).toString()}
+                                                  testId="save-resulting-balance" tone="save"/>
+                                <ProjectionResult label="Every day my money would create"
+                                                  value={calculateDailyEarnings(childAccount.balance + Number(pretendAdded), childAccount.interest / 100).toFixed(2)}
+                                                  testId="save-daily-growth" tone="save"/>
+                            </div>
+                        </section>
                     </div>
                 </div>
                 <div className={'prose flex max-w-none flex-col rounded-2xl bg-white px-4 py-5 text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6'}>

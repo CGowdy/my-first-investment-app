@@ -15,15 +15,11 @@ test.describe('Mock Spend Area', ()=>{
         await expect(ifISpendInput).toBeVisible();
         expect(await ifISpendInput.inputValue()).toBe('');
 
-        await expect(page.getByLabel('then my account will have').first()).toBeVisible();
-        await expect(page.getByLabel('then my account will have').first()).toBeDisabled();
-        expect(await page.getByLabel('then my account will have').first().inputValue()).toBe(accountBalance.toString());
+        await expect(page.getByTestId('spend-resulting-balance')).toHaveText(`$${accountBalance}`);
     });
 
     test('should update when entering a value', async ({page}) => {
         await ifISpendInput.fill('10');
-        await expect(page.getByLabel('then my account will have').first()).toBeVisible();
-        await expect(page.getByLabel('then my account will have').first()).toBeDisabled();
-        expect(await page.getByLabel('then my account will have').first().inputValue()).toBe((accountBalance - 10).toString());
+        await expect(page.getByTestId('spend-resulting-balance')).toHaveText(`$${accountBalance - 10}`);
     });
 });

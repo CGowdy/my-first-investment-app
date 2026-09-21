@@ -11,4 +11,14 @@ test.describe('Mock Pretend Zone',()=>{
     test('should have header', async ({page}) => {
         await expect(page.getByText('Pretend Zone')).toBeVisible();
     });
+
+    test('should distinguish editable amounts from calculated results', async ({page}) => {
+        const spendScenario = page.getByRole('region', {name: 'Spend scenario'});
+        const saveScenario = page.getByRole('region', {name: 'Save scenario'});
+
+        await expect(spendScenario.getByRole('textbox')).toHaveCount(1);
+        await expect(spendScenario.locator('output')).toHaveCount(2);
+        await expect(saveScenario.getByRole('textbox')).toHaveCount(1);
+        await expect(saveScenario.locator('output')).toHaveCount(2);
+    });
 });
