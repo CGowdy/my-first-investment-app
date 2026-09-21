@@ -18,9 +18,11 @@ export function ChildPreview({child}: ChildPreviewProps) {
     const [showRequests, setShowRequests] = useState(false);
     const [showAdjustment, setShowAdjustment] = useState(false);
     const [adjustment, setAdjustment] = useState(0);
+    const [currentBalance, setCurrentBalance] = useState(child.balance);
     const client = useContext(ClientContext) as unknown as IClient
 
     useEffect(() => {
+        if (!child._id) return;
         client.getPendingRequestsForChild(child._id).then(result => {
             setPendingRequests(result);
             setLoadingRequests(false);
@@ -32,9 +34,9 @@ export function ChildPreview({child}: ChildPreviewProps) {
         try {
             setLoading(true);
             const remainingPendingRequests = await client.approveRequest({...request, approved: ApprovalStatus.Approved});
-            //Calculate new balance
-            child.balance = child.balance - request.amount;
-            await client.updateChildAccount(child);
+            const updatedChild = {...child, balance: currentBalance - request.amount};
+            await client.updateChildAccount(updatedChild);
+            setCurrentBalance(updatedChild.balance);
             setPendingRequests(remainingPendingRequests);
             setLoading(false);
         } catch (error) {
@@ -55,10 +57,11 @@ export function ChildPreview({child}: ChildPreviewProps) {
 
     const adjustBalance = async () => {
         try {
+            if (!child._id) return;
             setLoading(true);
             const newBalance = await client.adjustBalance(child._id, adjustment);
 
-            child.balance = newBalance.balance;
+            setCurrentBalance(newBalance.balance);
             setLoading(false);
         } catch (error) {
             console.log(error);
@@ -67,7 +70,7 @@ export function ChildPreview({child}: ChildPreviewProps) {
     }
 
     return (
-        <div className={`shadow-lg  rounded-lg text-black  pl-2 pr-0 pb-0 relative  ${pendingRequests.length === 0 ? 'ring-1 bg-gray-200 ring-emerald-700 dark:ring-emerald-300' : 'bg-gray-200 ring-blue-700 ring-2'} z-10`}>
+        <div data-testid={`child-preview-${child._id}`} className={`shadow-lg  rounded-lg text-black  pl-2 pr-0 pb-0 relative  ${pendingRequests.length === 0 ? 'ring-1 bg-gray-200 ring-emerald-700 dark:ring-emerald-300' : 'bg-gray-200 ring-blue-700 ring-2'} z-10`}>
             {/*<Button buttonText="Delete" className={'ml-4'} onButtonPressed={() => onDeletePressed(child.id)}/> to be implemented in issue #12*/}
 
             {loadingRequests && <div>Loading requests...</div>}
@@ -91,16 +94,20 @@ export function ChildPreview({child}: ChildPreviewProps) {
                     <div className={'flex flex-row justify-between'}>
                         <div className={'flex flex-col pb-2 pt-2'}>
                             <div className={'text-base'}>{child.displayName}</div>
-                            <div className={'font-bold text-2xl'}>${child.balance}</div>
+                            <div className={'font-bold text-2xl'}>${currentBalance}</div>
                             <div className={'text-sm text-gray-400'}>{child.interest}% Interest</div>
 
                             {pendingRequests.length > 0 &&
-                                <div className={'flex items-center text-sm w-full h-full font-bold rounded-none rounded-tr-lg bg-transparent text-gray-900 cursor-pointer user-select:none'}
+                                <button
+                                     type="button"
+                                     aria-expanded={showRequests}
+                                     aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? 's' : ''}`}
+                                     className={'flex items-center text-sm w-full h-full font-bold rounded-none rounded-tr-lg bg-transparent text-gray-900 cursor-pointer user-select:none'}
                                      onClick={() => setShowRequests(!showRequests)}>
                                     <span className={'mr-1'}>{pendingRequests.length} request{pendingRequests.length > 1 ? 's' : ''}</span>
-                                    {!showRequests && (<span className={"material-symbols-outlined"}>stat_1</span>)}
-                                    {showRequests && (<span className={"material-symbols-outlined"}>stat_minus_1</span>)}
-                                </div>}
+                                    {!showRequests && (<span aria-hidden="true" className={"material-symbols-outlined"}>stat_1</span>)}
+                                    {showRequests && (<span aria-hidden="true" className={"material-symbols-outlined"}>stat_minus_1</span>)}
+                                </button>}
 
                         </div>
                         <div className={'ml-3'}>

@@ -12,14 +12,14 @@ it('should render the component', () => {
 
 it('should render a header if one is provided',() =>{
     let inputText = "test";
-    let headerText = "$";
+    const headerText = "$";
     render(<Input onInputChanged={(value:string)=>{ inputText = value;}} inputText={inputText} headerDisplay={headerText}/>)
     expect(screen.getByText(headerText)).toBeInTheDocument();
 });
 
 it('should render a footer if one is provided',() =>{
     let inputText = "test";
-    let footerText = "USD";
+    const footerText = "USD";
     render(<Input onInputChanged={(value:string)=>{ inputText = value;}} inputText={inputText} footerDisplay={footerText}/>)
     expect(screen.getByText(footerText)).toBeInTheDocument();
 });
@@ -32,13 +32,13 @@ it('should disable the input if disabled is true',() =>{
 
 it('should take on the type provided',() =>{
     let inputText = "1";
-    let type = "number";
+    const type = "number";
     render(<Input onInputChanged={(value:string)=>{ inputText = value;}} inputText={inputText} type={type}/>)
     expect(screen.getByDisplayValue(inputText)).toHaveAttribute("type",type);
 });
 
 it('should fired the onInputChanged event when the input is changed',async () =>{
-    let inputText = "1";
+    const inputText = "1";
     const newValue = "2";
     let inputChanged = false;
     render(<Input onInputChanged={()=>{inputChanged = true;}} inputText={inputText}/>)
@@ -48,7 +48,7 @@ it('should fired the onInputChanged event when the input is changed',async () =>
 });
 
 it('should respond to the onKeyPress event',async () =>{
-    let inputText = "1";
+    const inputText = "1";
     let enterPressed = false;
     render(<Input onInputChanged={()=>{}} inputText={inputText} onKeyPress={(e)=>{if(e.key === 'Enter'){enterPressed = true}}}/>)
     const inputElement = screen.getByDisplayValue(inputText);

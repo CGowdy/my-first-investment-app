@@ -29,6 +29,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({children})
         if(!clientContext) return;
         const storedUser = localStorage.getItem("user");
         if(storedUser && !user) {
+            // Hydrate the client-only session after mount; localStorage is unavailable during SSR.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUser(JSON.parse(storedUser));
         }
     },[clientContext, user]);

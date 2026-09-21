@@ -1,90 +1,79 @@
 # My First Investment App
 
-## Description
+A family financial-learning simulator for practicing saving, budgeting, simulated growth, and purchase decisions without holding or moving real money.
 
-This application is a child-friendly investment platform designed to teach children about saving and investing. It allows children to deposit their allowance, view their balance, and learn about the growth of their investments over time. Parents can manage their children's accounts, set interest rates, and oversee transactions.
+Parents use the app to manage child profiles, record balance changes, and review purchase requests. Children use a fast, phone-friendly experience to see their progress, explore tradeoffs, and ask to spend what they have saved.
 
-## Features
+## Current state
 
-- **For Children:**
-    - Deposit and withdraw allowance money.
-    - View account balance and transaction history.
-    - Access an investment growth forecaster.
+This is an early Next.js prototype, not a production financial or child-account system. The main parent/child flow exists, backed by either in-memory mock data or MongoDB Atlas through the server-side MongoDB driver. Authentication and authorization are prototype-only and must be replaced before public use.
 
-- **For Parents:**
-    - Create, modify, and delete child accounts.
-    - Set and adjust interest rates for each account.
-    - Oversee and approve transactions made by children.
+See:
 
-## Tech Stack
+- [`docs/PRODUCT.md`](docs/PRODUCT.md) for the vision, vocabulary, scope, and open decisions.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the current design, risks, and intended web/mobile direction.
+- [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for implemented features and the latest verification baseline.
+- [`AGENTS.md`](AGENTS.md) for repository conventions used by human and AI contributors.
 
-- **Frontend:** Next.js, React
-- **Backend:** Next.js API Routes
-- **Database:** MongoDB
-- **Authentication:** [Specify authentication method]
-- **Deployment:** Vercel (Frontend), [Backend Deployment Platform]
+## Stack
 
-## Installation
+- Next.js 16 App Router and React 19
+- TypeScript
+- Tailwind CSS 4
+- Next.js route handlers
+- MongoDB Atlas through the server-side MongoDB Node.js driver, with an in-memory mock client for local flows
+- Jest and Testing Library
+- Playwright
 
-To get this project running on your local machine, follow these steps:
+## Local setup
 
-1. **Clone the Repository:**
+1. Install dependencies:
 
-   ```bash
-   git clone https://github.com/your-username/your-project-name.git
-   cd your-project-name
+   ```powershell
+   npm ci
    ```
 
-2. **Install Dependencies:**
+2. Copy `.env.example` to `.env.local`. Keep `ENVIRONMENT=mock` for local UI work that should not call MongoDB. Mongo-backed work additionally requires the server-only MongoDB username, password, cluster host, and database variables shown in the example. A complete `MONGODB_URI` may be used instead.
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+3. Start the application:
 
-3. **Environment Variables:**
-
-   Create a `.env.local` file in the root directory and add the necessary environment variables:
-
-   ```
-   MONGODB_URI=your_mongodb_uri
-   NEXT_PUBLIC_API_URL=your_api_url
-   ```
-
-4. **Run the Development Server:**
-
-   ```bash
+   ```powershell
    npm run dev
-   # or
-   yarn dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000).
 
-## Usage
+The mock accounts currently defined in `app/clients/mockClient.ts` are:
 
-- **Logging In:**
-    - Parents and children can log in using their credentials. [Provide more specific steps if necessary.]
+| Role | Username | Password |
+| --- | --- | --- |
+| Parent | `parent1` | `pass123` |
+| Child | `child1` | `pass123` |
 
-- **Managing Accounts:**
-    - Parents can create and manage child accounts from the Parent Dashboard.
-    - Children can view their balance and simulate investment growth on the Child Dashboard.
+These are public development fixtures, not credentials suitable for a deployed environment.
 
-- **Transactions:**
-    - To make a deposit or withdrawal, [explain the steps].
+## Verification
 
-- **Forecasting Investments:**
-    - Use the investment forecaster to see potential growth over time. [Elaborate if needed.]
+```powershell
+npm run check
+```
 
-## Contributing
+The check command runs ESLint, generated-route TypeScript checks, unit tests, a production build, and mock Chromium browser tests. Playwright starts the local development server automatically.
 
-Contributions are welcome! If you have a feature request, bug report, or suggestion, please open an issue in the repository.
+Install the matching Chromium binary after a fresh Playwright update:
 
-## License
+```powershell
+npm run playwright:install
+```
 
-This project is licensed under the [MIT License](LICENSE).
+Run live MongoDB scenarios separately because they require credentials and may change shared test data:
 
----
+```powershell
+npm run test:e2e:integration
+```
 
-**Note:** Make sure to replace placeholders like repository links, project names, and specific environment variables with actual data relevant to your project. If your project requires additional steps for setup or usage, be sure to include those as well.
+The integration command first upserts deterministic Playwright-only accounts and clears transactions owned by those fixture account IDs. It does not touch other families or collections.
+
+## Development approach
+
+Build small, testable vertical slices. Keep financial-learning rules outside React components and database adapters so the same backend semantics can support the parent web experience and a future child mobile client. Treat family and child data as sensitive even though all balances are simulated.

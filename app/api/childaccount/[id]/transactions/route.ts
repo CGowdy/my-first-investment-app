@@ -20,10 +20,11 @@ export async function POST(req: Request){
     }
 }
 
-export async function GET(req: Request, {params}: {params: {id: string}}){
+export async function GET(req: Request, {params}: {params: Promise<{id: string}>}){
     try {
+        const{id} = await params;
         const transactions = await findMany<FindManyResponse<Transaction>>(Collection.Transactions, {
-            childId: params.id,
+            childId: id,
             approved: {$eq: ApprovalStatus.Pending}
         });
         return Response.json(transactions?.documents);

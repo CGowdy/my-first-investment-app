@@ -1,3 +1,3 @@
 import {IUser} from "@models/user";
 
-export interface ParentAccount extends IUser{}
+export type ParentAccount = IUser;

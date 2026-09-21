@@ -1,0 +1,17 @@
+---
+description: Core product, safety, and development rules for My First Investment App
+alwaysApply: true
+---
+
+# Project Foundations
+
+- Read `AGENTS.md` and the documents it references before changing behavior or architecture.
+- This product simulates family finances; it never holds, invests, or transfers real money.
+- Parents administer accounts. Children practice saving, growth, budgeting, and purchase requests.
+- Treat child, family, and credential data as sensitive.
+- Enforce authentication, parent-child ownership, validation, and authorization on the server.
+- Never expose secrets or preserve plaintext-password patterns in new code.
+- Keep business rules independent of React and MongoDB so web and future mobile clients share semantics.
+- Prefer deterministic tests and mock-backed local flows.
+- Inspect `git status` and diffs before editing; preserve unrelated user work.
+- Report verification honestly, including known baseline failures.

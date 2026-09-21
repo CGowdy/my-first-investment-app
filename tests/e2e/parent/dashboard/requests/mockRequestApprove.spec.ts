@@ -6,7 +6,7 @@ test.describe('Mock Pending Requests Approve', () => {
         await createMockChildRequest(page);
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMockParent(page);
-
+        await page.getByText('1 request', {exact: true}).click();
     });
 
     test('should approve request', async ({page}) => {

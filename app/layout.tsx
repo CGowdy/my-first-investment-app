@@ -8,6 +8,8 @@ import {ClientProvider} from "./context/ClientContext";
 import {SpeedInsights} from "@vercel/speed-insights/next";
 import {Analytics} from "@vercel/analytics/react";
 
+/* eslint-disable @next/next/no-page-custom-font -- Material Symbols is a stylesheet, not a text font. */
+
 const inter = Inter({subsets: ["latin"]});
 
 export const metadata: Metadata = {

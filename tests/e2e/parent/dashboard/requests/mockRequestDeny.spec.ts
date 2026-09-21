@@ -6,7 +6,7 @@ test.describe('Mock Pending Requests Deny', ()=>{
         await createMockChildRequest(page);
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMockParent(page);
-
+        await page.getByText('1 request', {exact: true}).click();
     });
 
     test('should deny request', async ({page}) => {

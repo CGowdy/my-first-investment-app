@@ -5,11 +5,10 @@ import IClient from "@models/client";
 import {GetClient} from "../clients/clientFactory";
 
 // Mock fetch
-// @ts-ignore There isn't a response type in NodeJS so we can ignore the typing
 global.fetch = jest.fn(() =>
     Promise.resolve({
         text: () => Promise.resolve(ClientType.Mock), // replace with the actual client type
-    })
+    } as Response)
 );
 
 describe('ClientProvider', () => {
@@ -17,12 +16,14 @@ describe('ClientProvider', () => {
     jest.clearAllMocks();
   });
 
-  it('renders without crashing', () => {
-    render(<>
-        <ClientProvider>
-            <div>test</div>
-        </ClientProvider>
-        </>);
+  it('renders without crashing', async () => {
+    await act(async () => {
+      render(<>
+          <ClientProvider>
+              <div>test</div>
+          </ClientProvider>
+          </>);
+    });
   });
 
   it('sets client correctly', async () => {

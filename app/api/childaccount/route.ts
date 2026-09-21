@@ -1,7 +1,7 @@
-import {Balance} from "@models/balance";
 import {ChildAccount} from "@models/child-account";
 import {IUser} from "@models/user";
 import {Collection, findOne, insertOne} from "@mongoDataApiHelper";
+import {ApprovalStatus, Transaction} from "@models/transaction";
 
 export const POST = async (req: Request) =>{
     try {
@@ -16,20 +16,24 @@ export const POST = async (req: Request) =>{
         }
 
         //Create first balance
-        const newBalance:Balance = {
+        const newAccountTransaction:Transaction = {
             childId: newChildAccountId.insertedId,
-            balance: requestData.balance,
-            date: new Date()
+            originalBalance: requestData.balance,
+            finalBalance: requestData.balance,
+            date: new Date(),
+            amount: requestData.balance,
+            reason: 'Account Creation - Initial balance',
+            approved: ApprovalStatus.AdminApproved
         }
-        const newBalanceId = await insertOne<Balance>(Collection.Balances,newBalance);
+        const newBalanceId = await insertOne<Transaction>(Collection.Transactions,newAccountTransaction);
         if(!newBalanceId){throw new Error('Error creating balance')}
 
         //Create Child User Account
-        let childUserResponse = await findOne<IUser>(Collection.Users,{_id: {$oid: newChildAccountId.insertedId}});
+        const childUserResponse = await findOne<IUser>(Collection.Users,{_id: {$oid: newChildAccountId.insertedId}});
         const childUser = childUserResponse?.document;
         if(!childUser){
             const newChildUser:IUser = {
-                _id:{$oid: newChildAccountId.insertedId},
+                _id:newChildAccountId.insertedId,
                 username: requestData.username,
                 password: requestData.password,
                 displayName: requestData.displayName,

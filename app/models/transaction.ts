@@ -2,16 +2,19 @@
 
 
 export interface Transaction {
-    _id?: any;
+    _id?: string;
     amount: number;
+    originalBalance?: number;
+    finalBalance?: number;
     date: Date;
     childId: string;
     reason: string;
-    approved: ApprovalStatus
+    approved: ApprovalStatus;
 }
 
 export enum ApprovalStatus {
     Pending,
     Approved,
-    Rejected
+    Rejected,
+    AdminApproved
 }

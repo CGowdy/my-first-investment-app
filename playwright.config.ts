@@ -1,42 +1,62 @@
-import {devices, PlaywrightTestConfig} from "playwright/test";
+import {defineConfig, devices} from "@playwright/test";
 
-const config: PlaywrightTestConfig = {
-    testDir: 'tests',
-    reporter: process.env.CI ? 'github' : 'dot',
-    retries: 3,
+const configuredBaseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL;
+const baseURL = configuredBaseUrl ?? 'http://127.0.0.1:3000';
+const mongoTests = /mongo.*\.spec\.ts/;
+
+export default defineConfig({
+    testDir: './tests/e2e',
+    fullyParallel: true,
+    forbidOnly: Boolean(process.env.CI),
+    reporter: process.env.CI
+        ? [['github'], ['html', {open: 'never'}]]
+        : [['list']],
+    retries: process.env.CI ? 2 : 0,
+    workers: process.env.CI ? 1 : undefined,
+    use: {
+        baseURL,
+        trace: 'retain-on-failure',
+        screenshot: 'only-on-failure',
+    },
+    webServer: configuredBaseUrl
+        ? undefined
+        : {
+            command: 'npm run dev',
+            env: {ENVIRONMENT: 'mock'},
+            url: baseURL,
+            reuseExistingServer: !process.env.CI,
+            timeout: 120_000,
+        },
     projects: [
-        /* Test against desktop browsers */
         {
             name: 'chromium',
+            testIgnore: mongoTests,
             use: {...devices['Desktop Chrome']},
         },
         {
             name: 'firefox',
+            testIgnore: mongoTests,
             use: {...devices['Desktop Firefox']},
         },
         {
             name: 'webkit',
+            testIgnore: mongoTests,
             use: {...devices['Desktop Safari']},
         },
-        /* Test against mobile viewports. */
         {
-            name: 'Mobile Chrome',
+            name: 'mobile-chrome',
+            testIgnore: mongoTests,
             use: {...devices['Pixel 5']},
         },
         {
-            name: 'Mobile Safari',
+            name: 'mobile-safari',
+            testIgnore: mongoTests,
             use: {...devices['iPhone 12']},
         },
-        /* Test against branded browsers. */
         {
-            name: 'Google Chrome',
-            use: {...devices['Desktop Chrome'], channel: 'chrome'}, // or 'chrome-beta'
-        },
-        {
-            name: 'Microsoft Edge',
-            use: {...devices['Desktop Edge'], channel: 'msedge'}, // or 'msedge-dev'
+            name: 'mongo-chromium',
+            testMatch: mongoTests,
+            use: {...devices['Desktop Chrome']},
         },
     ],
-}
-
-export default config;
+});

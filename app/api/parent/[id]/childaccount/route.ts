@@ -2,9 +2,10 @@ import {Collection, findMany} from "@mongoDataApiHelper";
 
 export const revalidate = 0
 
-export const GET = async(req: Request, {params}: {params:{id:string}}) =>{
+export const GET = async(req: Request, {params}: {params:Promise<{id:string}>}) =>{
     try{
-        const childAccountResponse = await findMany<any[]>(Collection.ChildAccounts,{parentId: params.id});
+        const {id} = await params;
+        const childAccountResponse = await findMany<any[]>(Collection.ChildAccounts,{parentId: id});
         if(!childAccountResponse) return Response.json([]);
         const accounts = childAccountResponse.documents;
         return Response.json(accounts);

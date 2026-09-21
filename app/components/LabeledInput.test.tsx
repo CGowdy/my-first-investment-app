@@ -10,7 +10,7 @@ it('should render a label and input', () => {
 
 
 it('should respond to the onKeyPress event',async () =>{
-    let inputText = "1";
+    const inputText = "1";
     let enterPressed = false;
     render(<Input onInputChanged={()=>{}} inputText={inputText} onKeyPress={(e)=>{if(e.key === 'Enter'){enterPressed = true}}}/>)
     const inputElement = screen.getByDisplayValue(inputText);

@@ -1,7 +1,8 @@
 import {IUser} from "@models/user";
 
-export interface ChildAccount extends IUser{
+export interface ChildAccount extends IUser {
     parentId: string;
     balance: number;
+    balanceLastUpdated: Date;
     interest: number;
 }

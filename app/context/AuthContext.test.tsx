@@ -22,7 +22,8 @@ const mockClientContext = {
     getPendingRequestsForChild: jest.fn(),
     getPendingRequestsForParent: jest.fn(),
     approveRequest: jest.fn(),
-    rejectRequest: jest.fn()
+    rejectRequest: jest.fn(),
+    adjustBalance: jest.fn()
 };
 
 // Helper component to use the AuthContext

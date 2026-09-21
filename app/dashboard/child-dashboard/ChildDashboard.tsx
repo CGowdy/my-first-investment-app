@@ -15,8 +15,6 @@ const calculateDailyEarnings = (balance: number, yearlyInterestRate: number): nu
 
 export default function ChildDashboard() {
     const {user} = useContext(AuthContext)!;
-    const [childAccount, setChildAccount] = useState<ChildAccount | null>(null);
-    const [dailyEarnings, setDailyEarnings] = useState(0);
     const [pretendSpent, setPretendSpent] = useState("");
     const [pretendAdded, setPretendAdded] = useState("");
     const [requestAmount, setRequestAmount] = useState("");
@@ -24,22 +22,17 @@ export default function ChildDashboard() {
     const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
     const [error, setError] = useState<string>("");
     const client = useContext(ClientContext) as unknown as IClient;
+    const childAccount = user?.isChildAccount ? user as ChildAccount : null;
+    const childId = childAccount?._id;
+    const dailyEarnings = childAccount
+        ? calculateDailyEarnings(childAccount.balance, childAccount.interest / 100)
+        : 0;
 
     useEffect(() => {
-        if (!user) return;
-        const tempChildAccount = user as ChildAccount;
-        setChildAccount(tempChildAccount as ChildAccount);
-        // Calculate daily earnings
-        const earnings = calculateDailyEarnings(tempChildAccount.balance, tempChildAccount.interest / 100);
-        // Save that to be displayed
-        setDailyEarnings(earnings);
-    }, [user]);
-
-    useEffect(() => {
-        if (!client || !childAccount || !childAccount._id) return;
+        if (!client || !childId) return;
         const fetchPendingRequests = async () => {
             try {
-                const requests = await client.getPendingRequestsForChild(childAccount?._id!);
+                const requests = await client.getPendingRequestsForChild(childId);
                 setPendingRequests(requests);
             } catch (error) {
                 console.log(error);
@@ -47,22 +40,28 @@ export default function ChildDashboard() {
         };
 
         fetchPendingRequests();
-    }, [client, childAccount]);
+    }, [client, childId]);
 
     const onRequestSubmit = async () => {
+        if (!childAccount || !childId) {
+            setError('Child account is unavailable');
+            return;
+        }
+
         const newRequest: Transaction = {
             amount: Number(requestAmount),
+            originalBalance: childAccount.balance,
             date: new Date(),
-            childId: childAccount?._id!,
+            childId,
             reason: requestReason,
             approved: ApprovalStatus.Pending
         }
         // Send request to backend
         try {
-            let updatedRequests = await client.sendRequest(newRequest, (newRequest.amount < 0) ? {error: "Cannot have negative"} as Option : undefined);
+            const updatedRequests = await client.sendRequest(newRequest, (newRequest.amount < 0) ? {error: "Cannot have negative"} as Option : undefined);
             setPendingRequests(updatedRequests);
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            setError(error instanceof Error ? error.message : 'Unable to send request');
         }
 
         setRequestAmount("");

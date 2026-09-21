@@ -24,7 +24,9 @@ export default function Login() {
 					inputText={username}
 					inputName={"username"}
 					onInputChanged={(e) => setUsername(e)}
-					onKeyPress={(event) => {event.key === 'Enter' ? login() : null}}
+					onKeyPress={(event) => {
+						if (event.key === 'Enter') void login();
+					}}
 				/>
 			</div>
 			<div className={"flex-col mb-3"}>
@@ -35,7 +37,9 @@ export default function Login() {
 					inputName={"password"}
 					inputText={password}
 					onInputChanged={(e) => setPassword(e)}
-					onKeyPress={(event) => {event.key === 'Enter' ? login() : null}}
+					onKeyPress={(event) => {
+						if (event.key === 'Enter') void login();
+					}}
 				/>
 			</div>
 			{loginFailed ? <div className={"text-red-500"}>Login Failed</div>:null}

@@ -19,6 +19,7 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
         password: "",
         parentId: "",
         balance:0,
+        balanceLastUpdated: new Date(),
         interest:0
     });
     const {user} = useContext(AuthContext)!;
@@ -34,6 +35,7 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
             username: childAccountForm.username,
             password: childAccountForm.password,
             balance: childAccountForm.balance,
+            balanceLastUpdated: new Date(),
             interest: childAccountForm.interest,
             parentId: user?._id??"" // This should be set to the current user's id
         };
@@ -46,6 +48,7 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
             password: "",
             parentId: "",
             balance:0,
+            balanceLastUpdated: new Date(),
             interest:0
         })
     };

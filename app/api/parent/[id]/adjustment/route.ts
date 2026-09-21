@@ -12,7 +12,7 @@ import {Transaction} from "@models/transaction";
 import {Collection, findOne, insertOne, updateOneById} from "@mongoDataApiHelper";
 import {ChildAccount} from "@models/child-account";
 
-export async function POST(req: Request, {params}:{params:{id:string}}){
+export async function POST(req: Request){
 	try {
 		const requestData = await req.json() as Transaction;
 		const insertResult = await insertOne<Transaction>(Collection.Transactions, requestData);
@@ -21,6 +21,7 @@ export async function POST(req: Request, {params}:{params:{id:string}}){
 			_id: { $oid: requestData.childId}
 		});
 		if(!childAccount?.document) throw new Error('Child not found');
+		if(!childAccount.document._id) throw new Error('Child does not have an id');
 		console.log(childAccount.document);
 		childAccount.document.balance += requestData.amount;
 		console.log(childAccount.document);

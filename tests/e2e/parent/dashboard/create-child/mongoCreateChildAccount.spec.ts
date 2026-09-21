@@ -52,6 +52,7 @@ test.describe('Mock Create Child Account', async () => {
             username: 'testchild',
             password: 'password',
             balance: 100.21,
+            balanceLastUpdated: new Date(),
             interest: 5,
             parentId: 'test'
         }

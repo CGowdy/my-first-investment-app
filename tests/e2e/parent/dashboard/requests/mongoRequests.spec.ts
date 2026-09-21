@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test';
-import {baseUrl, createMongoChildRequest, loginAsMongoParent} from '@playwrightHelpers';
-import {DeleteResponse} from "@mongoDataApiHelper";
+import {baseUrl, createMongoChildRequest, loginAsMongoParent, openMongoChildRequests} from '@playwrightHelpers';
+import type {DeleteResponse} from "@mongoDataApiHelper";
 
 test.describe('Mongo Pending Requests', ()=>{
     let currentTransactionId = '';
@@ -8,6 +8,7 @@ test.describe('Mongo Pending Requests', ()=>{
         currentTransactionId = await createMongoChildRequest(page);
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMongoParent(page);
+        await openMongoChildRequests(page);
     });
     test.afterEach(async ({page, request}) => {
         //Cleanup

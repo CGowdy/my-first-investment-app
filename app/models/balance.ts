@@ -1,34 +1,20 @@
-export interface Balance{
-    _id?: any;
-    childId: string;
-    balance: number;
-    date: Date;
-}
+export const getAccruedInterest = async (
+    currentBalance: number,
+    annualRate: number,
+    lastUpdated: Date,
+    asOf: Date = new Date()
+) => {
+    const daysSinceLastUpdate = calculateDaysBetweenDates(lastUpdated, asOf);
+    const dailyRate = annualRate / 365;
+    const accruedInterest = currentBalance * (Math.pow(1 + dailyRate, daysSinceLastUpdate) - 1);
 
-export const updateAndReturnNewBalance = async  (balance:Balance, rate:number) => {
-    const currentDate = new Date();
-    const daysSinceLastUpdate = calculateDaysBetweenDates(balance.date, currentDate);
-
-    let newBalance = balance.balance;
-    for (let i = 0; i < daysSinceLastUpdate; i++) {
-        newBalance += calculateDailyInterest(newBalance, rate);
-    }
-
-    const newBalanceEntry:Balance = {
-        date: currentDate,
-        balance: parseFloat(newBalance.toFixed(2)),
-        childId: balance.childId
-    };
-
-    return newBalanceEntry;
+    return Number(accruedInterest.toFixed(2));
 }
 
 function calculateDaysBetweenDates(startDate: Date, endDate: Date): number {
     const msPerDay = 24 * 60 * 60 * 1000;
-    return Math.round((endDate.getTime() - startDate.getTime()) / msPerDay);
-}
+    const startUtc = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+    const endUtc = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
 
-function calculateDailyInterest(balance: number, rate:number): number {
-    const dailyRate = rate / 365;
-    return balance * dailyRate;
+    return Math.max(0, Math.floor((endUtc - startUtc) / msPerDay));
 }

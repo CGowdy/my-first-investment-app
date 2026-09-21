@@ -1,341 +1,302 @@
-import dotenv from 'dotenv';
+import "server-only";
 
-dotenv.config();
+import {
+    Collection as MongoCollection,
+    Document,
+    Filter,
+    MongoClient,
+    ObjectId,
+} from "mongodb";
 
-/**
- * @template T
- * Fetches a document from a MongoDB collection by its ID.
- * @param {string} collection - The MongoDB collection name.
- * @param {string} id - The ID of the document to fetch.
- * @returns {Promise<FindOneResponse<T> | null>} - A Promise that resolves to the fetched document or null if an error occurred.
- */
+type MongoGlobal = typeof globalThis & {
+    myFirstInvestmentMongoClient?: Promise<MongoClient>;
+};
+
+const mongoGlobal = globalThis as MongoGlobal;
+
+function getMongoUri(): string {
+    const username = process.env.MONGODB_USERNAME;
+    const password = process.env.MONGODB_PASSWORD;
+    const host = process.env.MONGODB_CLUSTER_HOST;
+    if (username && password && host) {
+        return `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${host}/?appName=Cluster0`;
+    }
+
+    if (process.env.MONGODB_URI) {
+        return process.env.MONGODB_URI;
+    }
+
+    throw new Error("MongoDB connection environment variables are not configured");
+}
+
+function getMongoClient(): Promise<MongoClient> {
+    const uri = getMongoUri();
+
+    mongoGlobal.myFirstInvestmentMongoClient ??= new MongoClient(uri).connect();
+    return mongoGlobal.myFirstInvestmentMongoClient;
+}
+
+async function getCollection(collection: string): Promise<MongoCollection<Document>> {
+    const database = process.env.MONGODB_DATABASE;
+    if (!database) {
+        throw new Error("MONGODB_DATABASE is not configured");
+    }
+
+    const client = await getMongoClient();
+    return client.db(database).collection(collection);
+}
+
+function reportFailure(operation: string, error: unknown): void {
+    // Driver messages can contain sensitive connection details. Names and codes are enough for diagnosis.
+    const metadata = isRecord(error)
+        ? {name: error.name ?? "Error", code: error.code ?? "unknown"}
+        : {name: "Error", code: "unknown"};
+    console.error(`MongoDB ${operation} failed`, metadata);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toMongoValue(value: unknown): unknown {
+    if (value instanceof Date || value instanceof ObjectId) {
+        return value;
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(toMongoValue);
+    }
+
+    if (!isRecord(value)) {
+        return value;
+    }
+
+    if (value.$oid instanceof ObjectId) {
+        return value.$oid;
+    }
+
+    if (typeof value.$oid === "string" && ObjectId.isValid(value.$oid)) {
+        return new ObjectId(value.$oid);
+    }
+
+    if (typeof value.$date === "string" || value.$date instanceof Date) {
+        return new Date(value.$date);
+    }
+
+    return Object.fromEntries(
+        Object.entries(value).map(([key, nestedValue]) => [key, toMongoValue(nestedValue)]),
+    );
+}
+
+function fromMongoValue(value: unknown): unknown {
+    if (value instanceof ObjectId) {
+        return value.toHexString();
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(fromMongoValue);
+    }
+
+    if (!isRecord(value)) {
+        return value;
+    }
+
+    return Object.fromEntries(
+        Object.entries(value).map(([key, nestedValue]) => [key, fromMongoValue(nestedValue)]),
+    );
+}
+
+function idFilter(id: string): Filter<Document> {
+    if (!ObjectId.isValid(id)) {
+        return {_id: id} as unknown as Filter<Document>;
+    }
+
+    // Prototype records may use either string IDs or Atlas-generated ObjectIds.
+    return {_id: {$in: [id, new ObjectId(id)]}} as unknown as Filter<Document>;
+}
+
+function withoutImmutableId(update: object): Document {
+    const normalized = toMongoValue(update);
+    if (!isRecord(normalized)) {
+        return {};
+    }
+
+    const {_id: _ignored, ...mutableFields} = normalized;
+    return mutableFields;
+}
+
 export async function findById<T>(collection: string, id: string): Promise<FindOneResponse<T> | null> {
     try {
-        return await findOne(collection, {_id: id});
-    } catch (e) {
+        const document = await (await getCollection(collection)).findOne(idFilter(id));
+        return {document: fromMongoValue(document) as T | null};
+    } catch (error) {
+        reportFailure("findById", error);
         return null;
     }
 }
 
-/**
- * @template T
- * Fetches a single document from a MongoDB collection that matches the provided filter.
- * @param {string} collection - The MongoDB collection name.
- * @param {object} [filter] - The filter criteria for the MongoDB query.
- * @returns {Promise<FindOneResponse<T> | null>} - A Promise that resolves to the fetched document or null if an error occurred.
- */
-export async function findOne<T>(collection: string, filter?: object): Promise<FindOneResponse<T> | null> {
+export async function findOne<T>(collection: string, filter: object = {}): Promise<FindOneResponse<T> | null> {
     try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            filter: filter?{...filter}:undefined
-        }
-
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/findOne`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        return await response.json();
-    } catch (e) {
-        console.log(e);
+        const document = await (await getCollection(collection)).findOne(
+            toMongoValue(filter) as Filter<Document>,
+        );
+        return {document: fromMongoValue(document) as T | null};
+    } catch (error) {
+        reportFailure("findOne", error);
         return null;
     }
 }
 
-/**
- * @template T
- * Fetches multiple documents from a MongoDB collection that match the provided filter.
- * @param {string} collection - The MongoDB collection name.
- * @param {object} [filter] - The filter criteria for the MongoDB query.
- * @returns {Promise<FindManyResponse<T> | null>} - A Promise that resolves to an array of fetched documents or null if an error occurred.
- */
-export async function findMany<T>(collection: string, filter?: object): Promise<FindManyResponse<T> | null> {
+export async function findMany<T>(collection: string, filter: object = {}): Promise<FindManyResponse<T> | null> {
     try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            filter: filter?{...filter}:undefined
-        }
-
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/find`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        return await response.json();
-    } catch (e) {
-        console.log(e);
+        const documents = await (await getCollection(collection))
+            .find(toMongoValue(filter) as Filter<Document>)
+            .toArray();
+        return {documents: fromMongoValue(documents) as T[]};
+    } catch (error) {
+        reportFailure("findMany", error);
         return null;
     }
 }
 
-/**
- * @template T
- * Inserts a single document into a MongoDB collection.
- * @param {string} collection - The MongoDB collection name.
- * @param {T} documentData - The data of the document to insert.
- * @returns {Promise<InsertOneResponse | null>} - A Promise that resolves to the inserted id or null if an error occurred.
- */
 export async function insertOne<T>(collection: string, documentData: T): Promise<InsertOneResponse | null> {
     try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            document: formatDocument(documentData)
-        };
-
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/insertOne`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        return await response.json();
-    } catch (e) {
-        console.log(e);
+        const result = await (await getCollection(collection)).insertOne(
+            toMongoValue(documentData) as Document,
+        );
+        return {insertedId: result.insertedId.toString()};
+    } catch (error) {
+        reportFailure("insertOne", error);
         return null;
     }
 }
 
-/**
- * @template T
- * Inserts multiple documents into a MongoDB collection.
- * @param {string} collection - The MongoDB collection name.
- * @param {T[]} documentsData - The data of the documents to insert.
- * @returns {Promise<InsertManyResponse | null>} - A Promise that resolves to an array of inserted id's or null if an error occurred.
- */
 export async function insertMany<T>(collection: string, documentsData: T[]): Promise<InsertManyResponse | null> {
     try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            documents: documentsData.map(formatDocument)
+        const result = await (await getCollection(collection)).insertMany(
+            documentsData.map(document => toMongoValue(document) as Document),
+        );
+        return {insertedIds: Object.values(result.insertedIds).map(id => id.toString())};
+    } catch (error) {
+        reportFailure("insertMany", error);
+        return null;
+    }
+}
+
+export async function updateOneById<T>(
+    collection: string,
+    id: string,
+    update: object,
+): Promise<UpdateOneResponse | null> {
+    return updateOne<T>(collection, idFilter(id), update);
+}
+
+export async function updateOne<T>(
+    collection: string,
+    filter: object,
+    update: object,
+): Promise<UpdateOneResponse | null> {
+    try {
+        const result = await (await getCollection(collection)).updateOne(
+            toMongoValue(filter) as Filter<Document>,
+            {$set: withoutImmutableId(update)},
+        );
+        return {
+            matchedCount: result.matchedCount,
+            modifiedCount: result.modifiedCount,
+            upsertedId: result.upsertedId?.toString(),
         };
-
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/insertMany`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-
-        return await response.json();
-    } catch (e) {
-        console.log(e);
-        return null;
-    }
-}
-
-/**
- * @template T
- * Updates a single document in a MongoDB collection by its ID.
- * @param {string} collection - The MongoDB collection name.
- * @param {string} id - The ID of the document to update.
- * @param {object} update - The update operations to be applied to the document.
- * @returns {Promise<UpdateOneResponse | null>} - A Promise that resolves to an object that describes how many items were updated or null if an error occurred.
- */
-export async function updateOneById<T>(collection: string, id: string, update: object): Promise<UpdateOneResponse | null> {
-    try {
-        return await updateOne(collection, {_id: {$oid: id}}, update);
-    } catch (e) {
-        return null;
-    }
-}
-
-/**
- * @template T
- * Updates a single document in a MongoDB collection that matches the provided filter.
- * @param {string} collection - The MongoDB collection name.
- * @param {object} filter - The filter criteria for the MongoDB query.
- * @param {object} update - The update operations to be applied to the document.
- * @returns {Promise<UpdateOneResponse|null>} - A Promise that resolves to an object that describes how many items were updated or null if an error occurred.
- */
-export async function updateOne<T>(collection: string, filter: object, update: object): Promise<UpdateOneResponse | null> {
-    try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            filter: filter,
-            update: {
-                $set: {...update}
-            }
-        }
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/updateOne`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        return await response.json();
-    } catch
-        (e) {
-        console.log(e);
+    } catch (error) {
+        reportFailure("updateOne", error);
         return null;
     }
 }
 
 export async function deleteById(collection: string, id: string): Promise<DeleteResponse | null> {
-    try {
-        return await deleteOne(collection, {_id: {$oid: id}});
-    } catch (e) {
-        return null;
-    }
+    return deleteOne(collection, idFilter(id));
 }
 
 export async function deleteOne(collection: string, filter: object): Promise<DeleteResponse | null> {
     try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            filter: filter
-        }
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/deleteOne`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        return await response.json();
-    } catch
-        (e) {
-        console.log(e);
+        const result = await (await getCollection(collection)).deleteOne(
+            toMongoValue(filter) as Filter<Document>,
+        );
+        return {deletedCount: result.deletedCount};
+    } catch (error) {
+        reportFailure("deleteOne", error);
         return null;
     }
 }
 
-export async function deleteMany(collection: string, filter: object): Promise<DeleteResponse | null>{
+export async function deleteMany(collection: string, filter: object): Promise<DeleteResponse | null> {
     try {
-        const body = {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            filter: filter
-        }
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/deleteMany`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        return await response.json();
-    } catch
-        (e) {
-        console.log(e);
+        const result = await (await getCollection(collection)).deleteMany(
+            toMongoValue(filter) as Filter<Document>,
+        );
+        return {deletedCount: result.deletedCount};
+    } catch (error) {
+        reportFailure("deleteMany", error);
         return null;
     }
 }
 
-export async function aggregate<T>(collection: string, pipeline?:object): Promise <AggregateResponse<T> | null>{
-    try{
-        const body: any= {
-            collection: collection,
-            database: process.env.MONGODB_DATABASE,
-            dataSource: process.env.MONGODB_DATASOURCE,
-            pipeline: pipeline
-         };
-
-        const response = await fetch(`${process.env.MONGODB_DATA_API_URL}/aggregate`, {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Request-Headers': '*',
-                'api-key': process.env.MONGODB_DATA_API_KEY as string
-            }
-        });
-        if(!response.ok) throw new Error(`Failed to fetch data from ${collection}: ${(await response.json())}`);
-        return await response.json();
-    } catch (e){
-        console.log(e);
+export async function aggregate<T>(
+    collection: string,
+    pipeline: object[] = [],
+): Promise<AggregateResponse<T> | null> {
+    try {
+        const documents = await (await getCollection(collection))
+            .aggregate(toMongoValue(pipeline) as Document[])
+            .toArray();
+        return {documents: fromMongoValue(documents) as T[]};
+    } catch (error) {
+        reportFailure("aggregate", error);
         return null;
     }
 }
 
 export type FindOneResponse<T> = {
-    document: T
-}
+    document: T | null;
+};
 
 export type FindManyResponse<T> = {
-    documents: T[]
-}
+    documents: T[];
+};
 
 export type AggregateResponse<T> = {
-    documents: T[]
-}
+    documents: T[];
+};
 
 export type InsertOneResponse = {
-    insertedId: string
-}
+    insertedId: string;
+};
 
 export type InsertManyResponse = {
-    insertedIds: string[]
-}
-
+    insertedIds: string[];
+};
 
 export type UpdateOneResponse = {
-    matchedCount: number,
-    modifiedCount: number,
-    upsertedId?: string
-}
+    matchedCount: number;
+    modifiedCount: number;
+    upsertedId?: string;
+};
 
 export type UpdateManyResponse = {
-    matchedCount: number,
-    modifiedCount: number,
-    upsertedId?: string
-}
+    matchedCount: number;
+    modifiedCount: number;
+    upsertedId?: string;
+};
 
 export type DeleteResponse = {
-    deletedCount: number
-}
+    deletedCount: number;
+};
 
-export enum Collection{
-    Users = 'users',
-    ChildAccounts = 'childaccounts',
-    Balances = 'balances',
-    Transactions = 'transactions'
-
-}
-
-
-function formatDocument(document: any): any{
-    let formattedDocument: any = {};
-    for (const key in document) {
-        if (document[key] instanceof Date) {
-            formattedDocument[key] = {$date:document[key]};
-        }else{
-            formattedDocument[key] = document[key];
-        }
-    }
-    return formattedDocument;
+export enum Collection {
+    Users = "users",
+    ChildAccounts = "childaccounts",
+    Transactions = "transactions",
 }

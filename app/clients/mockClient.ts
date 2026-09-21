@@ -5,12 +5,11 @@ import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
 import {guid} from '../helper-functions';
-import Error from "next/error";
 
 
 export const mockChildren: ChildAccount[] = [
-    {_id: "2", username: 'child1', password: 'pass123', displayName: 'Child 1', parentId: "1", balance: 250, interest: 12},
-    {_id: "123", username: 'child2', password: 'pass123', displayName: 'Child 2', parentId: "1", balance: 1150, interest: 12},
+    {_id: "2", username: 'child1', password: 'pass123', displayName: 'Child 1', parentId: "1", balance: 250, balanceLastUpdated: new Date(), interest: 12},
+    {_id: "123", username: 'child2', password: 'pass123', displayName: 'Child 2', parentId: "1", balance: 1150, balanceLastUpdated: new Date(), interest: 12},
 ];
 export const mockUsers: IUser[] = [
     {_id: "1", username: 'parent1', password: 'pass123', displayName: 'Parent One'},
@@ -89,6 +88,7 @@ export default class MockClient implements IClient {
             if (options?.error) reject(new Error(options.error));
             const child = mockChildren.find(child => child._id === newRequest.childId);
             if (child) {
+                newRequest._id ??= guid();
                 mockRequests.push(newRequest);
                 resolve(mockRequests.filter(request => mockChildren.filter(child => newRequest.childId === child._id).map(child => child._id).includes(request.childId)));
             } else {
@@ -138,10 +138,7 @@ export default class MockClient implements IClient {
 
     adjustBalance(childUserId: string, adjustment: number, options?: Option): Promise<ChildAccount> {
         return new Promise((resolve, reject) => {
-            if (options?.error) reject(new Error({
-                message: options.error,
-                statusCode: options.status
-            }));
+            if (options?.error) reject(new Error(options.error));
             const child = mockChildren.find(child => child._id === childUserId);
             if (child) {
                 child.balance += adjustment;

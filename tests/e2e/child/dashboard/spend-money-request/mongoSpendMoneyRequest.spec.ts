@@ -1,7 +1,6 @@
 import {expect, test} from '@playwright/test'
 import {baseUrl, loginAsMongoChild} from '@playwrightHelpers';
 import {Transaction} from "@models/transaction";
-import {Collection} from "@mongoDataApiHelper";
 
 
 test.describe('Mongo Spend Money Request', ()=>{
@@ -21,18 +20,17 @@ test.describe('Mongo Spend Money Request', ()=>{
     });
 
     test('should update the account balance when a money request is made', async ({page, request}) => {
-        page.on('response', async (response) => {
-            if(response.url().includes(Collection.Transactions) && response.request().method() === 'POST') {
-                const responseData:Transaction[] = await response.json();
-                currentTransactionId = responseData[0]._id;
-            }
-        });
-
         const accountBalance = Number.parseFloat(await page.getByTestId('account-balance').textContent() ?? "0");
         await page.getByPlaceholder('Enter amount', {exact: true}).fill('10');
         await page.getByLabel('I want to spend this money because').fill('I want to test');
+        const persistedRequest = page.waitForResponse(response =>
+            response.url().includes('/transactions') &&
+            response.request().method() === 'POST' &&
+            response.ok()
+        );
         await page.getByRole('button', {name: 'Request'}).click();
-        await page.waitForTimeout(500);
+        const responseData: Transaction[] = await (await persistedRequest).json();
+        currentTransactionId = responseData[0]._id ?? '';
         await expect(page.getByText(`($${accountBalance.toFixed(2)})`)).toBeVisible();
         await expect(page.getByText(`$${(accountBalance - 10).toFixed(2)}`)).toBeVisible();
     });

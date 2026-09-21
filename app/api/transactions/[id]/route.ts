@@ -1,8 +1,9 @@
 import {Collection, deleteById} from "@mongoDataApiHelper";
 
-export async function DELETE (req: Request, {params}: {params: {id: string}}) {
+export async function DELETE (req: Request, {params}: {params: Promise<{id: string}>}) {
   try {
-    const numberDeleted = await deleteById(Collection.Transactions, params.id)
+    const {id} = await params
+    const numberDeleted = await deleteById(Collection.Transactions, id)
     if (!numberDeleted || numberDeleted.deletedCount == 0) throw new Error('Failed to delete transaction')
     return Response.json(numberDeleted);
   } catch (error) {

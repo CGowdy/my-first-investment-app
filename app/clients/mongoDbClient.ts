@@ -4,7 +4,7 @@ import {Option} from "@models/option";
 import {IUser} from "@models/user";
 import {ChildAccount} from "@models/child-account";
 import {ApprovalStatus, Transaction} from "@models/transaction";
-import {DeleteResponse, UpdateOneResponse} from "@mongoDataApiHelper";
+import type {DeleteResponse, UpdateOneResponse} from "@mongoDataApiHelper";
 
 export default class MongoDbClient implements IClient {
 
