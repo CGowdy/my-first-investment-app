@@ -140,10 +140,15 @@ export async function findById<T>(collection: string, id: string, session?: Clie
     }
 }
 
-export async function findOne<T>(collection: string, filter: object = {}): Promise<FindOneResponse<T> | null> {
+export async function findOne<T>(
+    collection: string,
+    filter: object = {},
+    session?: ClientSession,
+): Promise<FindOneResponse<T> | null> {
     try {
         const document = await (await getCollection(collection)).findOne(
             toMongoValue(filter) as Filter<Document>,
+            {session},
         );
         return {document: fromMongoValue(document) as T | null};
     } catch (error) {
@@ -200,6 +205,37 @@ export async function updateOneById<T>(
     session?: ClientSession,
 ): Promise<UpdateOneResponse | null> {
     return updateOne<T>(collection, idFilter(id), update, session);
+}
+
+export async function insertOneOrThrow<T>(
+    collection: string,
+    documentData: T,
+    session?: ClientSession,
+): Promise<InsertOneResponse> {
+    const result = await (await getCollection(collection)).insertOne(
+        toMongoValue(documentData) as Document,
+        {session},
+    );
+    return {insertedId: result.insertedId.toString()};
+}
+
+let userUsernameIndexPromise: Promise<string> | undefined;
+
+export async function ensureUserUsernameUniqueIndex(): Promise<void> {
+    userUsernameIndexPromise ??= getCollection(Collection.Users).then(collection => collection.createIndex(
+        {username: 1},
+        {unique: true, name: "users_username_unique"},
+    ));
+    try {
+        await userUsernameIndexPromise;
+    } catch (error) {
+        userUsernameIndexPromise = undefined;
+        throw error;
+    }
+}
+
+export function isDuplicateKeyError(error: unknown): boolean {
+    return typeof error === "object" && error !== null && "code" in error && error.code === 11000;
 }
 
 export async function updateOne<T>(

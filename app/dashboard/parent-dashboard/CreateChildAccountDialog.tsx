@@ -12,6 +12,7 @@ interface CreateChildAccountDialogProps {
 }
 
 export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> = ({isOpen, onRequestClose, onCreateChildAccount}) => {
+    const [error, setError] = useState("");
     const [childAccountForm, setChildAccountForm] = useState<CreateChildAccountInput>({
         displayName: "",
         username: "",
@@ -25,6 +26,7 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
         setChildAccountForm(prevState => ({...prevState, [field]: value}));
     }
     const handleOnCreate = async () => {
+        setError("");
         const child: CreateChildAccountInput = {
             displayName: childAccountForm.displayName,
             username: childAccountForm.username,
@@ -32,16 +34,20 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
             balance: childAccountForm.balance,
             interest: childAccountForm.interest,
         };
-        const newChildAccount = await client.addChildUser(child);
-        if(!newChildAccount) return;    //TODO: handle error better
-        onCreateChildAccount(newChildAccount);
-        setChildAccountForm({
-            displayName: "",
-            username: "",
-            password: "",
-            balance:0,
-            interest:0
-        })
+        try {
+            const newChildAccount = await client.addChildUser(child);
+            if (!newChildAccount) throw new Error("Unable to create child account");
+            onCreateChildAccount(newChildAccount);
+            setChildAccountForm({
+                displayName: "",
+                username: "",
+                password: "",
+                balance:0,
+                interest:0
+            });
+        } catch (error) {
+            setError(error instanceof Error ? error.message : "Unable to create child account");
+        }
     };
 
     return (
@@ -92,6 +98,7 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
                                     footerDisplay={"%"}/>
                             </div>
                             <Button buttonText={'Create Account'} onButtonPressed={handleOnCreate}/>
+                            {error && <p role="alert" className="text-red-400">{error}</p>}
                         </div>
                     </Dialog.Panel>
                 </div>

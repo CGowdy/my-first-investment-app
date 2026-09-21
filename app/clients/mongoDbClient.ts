@@ -36,12 +36,15 @@ export default class MongoDbClient implements IClient {
     }
 
     async addChildUser(childData: CreateChildAccountInput, options?: Option | undefined): Promise<ChildAccount | null> {
-        try{
-            return await this.post<ChildAccount>(`/api/childaccount`, childData);
-        } catch(e){
-            console.log(e);
-            return null;
+        const response = await fetch("/api/childaccount", {
+            method: "POST",
+            body: JSON.stringify(childData),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to create child account");
         }
+        return await response.json() as ChildAccount;
     }
 
     async getChildAccounts(parentId: string, options?: Option | undefined): Promise<ChildAccount[]|null> {

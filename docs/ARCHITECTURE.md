@@ -18,7 +18,7 @@ ClientContext -> IClient
 
 `AuthContext` restores a server-issued, signed HttpOnly session into React state through the selected data client. The dashboard selects a child or parent view from `isChildAccount`. `IClient` provides a replaceable browser-side data facade, which is useful for deterministic tests, but currently mixes transport concerns with application operations.
 
-The data model centers on users, child accounts, and transactions. Balances are also stored directly on child accounts, while transactions provide a partial history. Interest is calculated during child login.
+The data model centers on users, child accounts, and transactions. Usernames are protected by the unique `users_username_unique` database index. Balances are also stored directly on child accounts, while transactions provide a partial history. Interest is calculated during child login.
 
 ## Current boundaries
 
@@ -35,7 +35,7 @@ The data model centers on users, child accounts, and transactions. Balances are 
 
 ## Main architectural risks
 
-1. Child creation and login-time interest still use separate writes; request approval and parent adjustments now update their ledger records and child balances in MongoDB transactions.
+1. Login-time interest still uses separate writes; child provisioning, request approval, and parent adjustments now use MongoDB transactions for their related records.
 2. Several API boundaries still need a shared validation and error-response contract.
 3. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
 4. Business behavior is spread across components, clients, route handlers, and login side effects.

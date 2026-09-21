@@ -8,6 +8,7 @@ import {guid} from '../helper-functions';
 import {compare, hash} from "bcryptjs";
 import {approvePurchaseRequest} from "../domain/purchase-request";
 import {createBalanceAdjustment} from "../domain/balance-adjustment";
+import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
 
 
 type MockUser = IUser & {passwordHash: string};
@@ -50,26 +51,27 @@ export default class MockClient implements IClient {
 
     //Child CRUD
     async addChildUser(childData: CreateChildAccountInput): Promise<ChildAccount| null> {
-        if (!this.session?._id || this.session.isChildAccount) return null;
-        const child: ChildAccount = {
-            _id: guid(),
-            username: childData.username,
-            displayName: childData.displayName,
-            parentId: this.session._id,
-            balance: childData.balance,
-            balanceLastUpdated: new Date(),
-            interest: childData.interest,
-            isChildAccount: true,
-        };
-        mockUsers.push({
-            _id: child._id,
-            username: child.username,
-            displayName: child.displayName,
-            isChildAccount: true,
-            passwordHash: await hash(childData.password, 12),
+        if (!this.session?._id || this.session.isChildAccount) throw new Error("Guardian access required");
+        const requestData = parseCreateChildAccount(childData);
+        if (!requestData) throw new Error("Invalid child account");
+        if (mockUsers.some(user => user.username === requestData.username)) {
+            throw new Error("Username is already in use");
+        }
+
+        const records = createChildAccountRecords({
+            childId: guid(),
+            familyId: this.session._id,
+            username: requestData.username,
+            displayName: requestData.displayName,
+            passwordHash: await hash(requestData.password, 12),
+            balance: requestData.balance,
+            interest: requestData.interest,
+            createdAt: new Date(),
         });
-        mockChildren.push(child);
-        return Promise.resolve(child);
+        mockUsers.push(records.user);
+        mockChildren.push(records.childAccount);
+        mockRequests.push({...records.openingTransaction, _id: guid()});
+        return records.childAccount;
     }
 
     getChildAccounts(parentId: string): Promise<ChildAccount[]|null> {

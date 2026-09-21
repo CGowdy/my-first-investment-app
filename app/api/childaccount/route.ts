@@ -1,32 +1,20 @@
-import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
-import {Collection, findOne, insertOne} from "@mongoDataApiHelper";
-import {ApprovalStatus, Transaction} from "@models/transaction";
+import {ChildAccount} from "@models/child-account";
+import {
+    Collection,
+    ensureUserUsernameUniqueIndex,
+    findOne,
+    insertOneOrThrow,
+    isDuplicateKeyError,
+    withMongoTransaction,
+} from "@mongoDataApiHelper";
+import {Transaction} from "@models/transaction";
 import {hashPassword} from "../../server/auth/password";
 import type {StoredUser} from "../../server/auth/types";
 import {toAuthenticatedChildAccount} from "../auth/security";
 import {readSession} from "../../server/auth/session";
+import {createChildAccountRecords, parseCreateChildAccount} from "../../domain/child-account-provisioning";
 
-function parseCreateChildAccount(value: unknown): CreateChildAccountInput | null {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
-    const input = value as Record<string, unknown>;
-    if (
-        typeof input.username !== "string" || input.username.length < 1 || input.username.length > 128
-        || typeof input.password !== "string" || input.password.length < 8 || input.password.length > 256
-        || typeof input.displayName !== "string" || input.displayName.length < 1 || input.displayName.length > 128
-        || typeof input.balance !== "number" || !Number.isFinite(input.balance)
-        || typeof input.interest !== "number" || !Number.isFinite(input.interest)
-    ) return null;
-
-    return {
-        username: input.username,
-        password: input.password,
-        displayName: input.displayName,
-        balance: input.balance,
-        interest: input.interest,
-    };
-}
-
-export const POST = async (req: Request) =>{
+export const POST = async (req: Request) => {
     try {
         const session = await readSession();
         if (!session) {
@@ -35,61 +23,64 @@ export const POST = async (req: Request) =>{
         if (session.role !== "guardian" || session.userId !== session.familyId) {
             return Response.json({error: {code: "FORBIDDEN", message: "Guardian access required"}}, {status: 403});
         }
-        const requestData = parseCreateChildAccount(await req.json());
+
+        const requestBody = await req.json().catch(() => null);
+        const requestData = parseCreateChildAccount(requestBody);
         if (!requestData) {
             return Response.json({error: {code: "INVALID_CHILD_ACCOUNT", message: "Invalid child account"}}, {status: 400});
         }
+        await ensureUserUsernameUniqueIndex();
         const passwordHash = await hashPassword(requestData.password);
-        const storedChildAccount: Omit<ChildAccount, "_id"> = {
-            username: requestData.username,
-            displayName: requestData.displayName,
-            isChildAccount: true,
-            parentId: session.familyId,
-            balance: requestData.balance,
-            balanceLastUpdated: new Date(),
-            interest: requestData.interest,
-        };
 
-        //Create Child Account
-        const newChildAccountId = await insertOne(Collection.ChildAccounts, storedChildAccount);
-        if(!newChildAccountId){ throw new Error('Error creating child account');}
-        const updateChildAccountData: ChildAccount = {
-            ...storedChildAccount,
-            _id: newChildAccountId.insertedId
-        }
+        const result = await withMongoTransaction(async databaseSession => {
+            const existingUser = (await findOne<StoredUser>(
+                Collection.Users,
+                {username: requestData.username},
+                databaseSession,
+            ))?.document;
+            if (existingUser) return {error: "USERNAME_TAKEN" as const};
 
-        //Create first balance
-        const newAccountTransaction:Transaction = {
-            childId: newChildAccountId.insertedId,
-            originalBalance: requestData.balance,
-            finalBalance: requestData.balance,
-            date: new Date(),
-            amount: requestData.balance,
-            reason: 'Account Creation - Initial balance',
-            approved: ApprovalStatus.AdminApproved
-        }
-        const newBalanceId = await insertOne<Transaction>(Collection.Transactions,newAccountTransaction);
-        if(!newBalanceId){throw new Error('Error creating balance')}
-
-        //Create Child User Account
-        const childUserResponse = await findOne<StoredUser>(Collection.Users,{_id: {$oid: newChildAccountId.insertedId}});
-        const childUser = childUserResponse?.document;
-        if(!childUser){
-            const newChildUser:StoredUser = {
-                _id:newChildAccountId.insertedId,
+            const createdAt = new Date();
+            const storedChildAccount: Omit<ChildAccount, "_id"> = {
                 username: requestData.username,
-                passwordHash,
                 displayName: requestData.displayName,
-                isChildAccount: true
+                isChildAccount: true,
+                parentId: session.familyId,
+                balance: requestData.balance,
+                balanceLastUpdated: createdAt,
+                interest: requestData.interest,
             };
-            await insertOne<StoredUser>(Collection.Users,newChildUser);
-        }
+            const childInsert = await insertOneOrThrow(Collection.ChildAccounts, storedChildAccount, databaseSession);
 
-        return Response.json(toAuthenticatedChildAccount(updateChildAccountData));
-    } catch (error) {
-        return new Response(null, {
-            status: 500,
-            statusText: `Server error: ${error}`
+            const records = createChildAccountRecords({
+                childId: childInsert.insertedId,
+                familyId: session.familyId,
+                username: requestData.username,
+                displayName: requestData.displayName,
+                passwordHash,
+                balance: requestData.balance,
+                interest: requestData.interest,
+                createdAt,
+            });
+            await insertOneOrThrow<Transaction>(
+                Collection.Transactions,
+                records.openingTransaction,
+                databaseSession,
+            );
+
+            await insertOneOrThrow<StoredUser>(Collection.Users, records.user, databaseSession);
+
+            return {child: records.childAccount};
         });
+
+        if ("error" in result) {
+            return Response.json({error: {code: result.error, message: "Username is already in use"}}, {status: 409});
+        }
+        return Response.json(toAuthenticatedChildAccount(result.child));
+    } catch (error) {
+        if (isDuplicateKeyError(error)) {
+            return Response.json({error: {code: "USERNAME_TAKEN", message: "Username is already in use"}}, {status: 409});
+        }
+        return Response.json({error: {code: "SERVER_ERROR", message: "Unable to create child account"}}, {status: 500});
     }
-}
+};
