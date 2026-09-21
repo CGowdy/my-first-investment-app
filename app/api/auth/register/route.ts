@@ -13,7 +13,7 @@ export const POST = async (req: Request) => {
             return registrationError(
                 400,
                 "INVALID_REGISTRATION",
-                "Enter a username, display name, and password of at least 8 characters",
+                "Enter a username, display name, and non-empty password",
             );
         }
 

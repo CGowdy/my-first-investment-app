@@ -1,9 +1,8 @@
 import type {GuardianRegistrationData} from "@models/auth";
+import {isValidPrototypePassword} from "./prototype-password-policy";
 
 const MAX_USERNAME_LENGTH = 128;
 const MAX_DISPLAY_NAME_LENGTH = 128;
-const MIN_PASSWORD_LENGTH = 8;
-const MAX_PASSWORD_LENGTH = 256;
 
 export function parseGuardianRegistration(value: unknown): GuardianRegistrationData | null {
     if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
@@ -17,9 +16,7 @@ export function parseGuardianRegistration(value: unknown): GuardianRegistrationD
         || username.length > MAX_USERNAME_LENGTH
         || displayName.length < 1
         || displayName.length > MAX_DISPLAY_NAME_LENGTH
-        || typeof candidate.password !== "string"
-        || candidate.password.length < MIN_PASSWORD_LENGTH
-        || candidate.password.length > MAX_PASSWORD_LENGTH
+        || !isValidPrototypePassword(candidate.password)
     ) return null;
 
     return {username, displayName, password: candidate.password};

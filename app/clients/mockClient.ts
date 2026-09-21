@@ -49,7 +49,7 @@ export default class MockClient implements IClient {
 
     async registerGuardian(value: GuardianRegistrationData): Promise<AuthenticatedAccount> {
         const registration = parseGuardianRegistration(value);
-        if (!registration) throw new Error("Enter a username, display name, and password of at least 8 characters");
+        if (!registration) throw new Error("Enter a username, display name, and non-empty password");
         if (mockUsers.some(user => user.username === registration.username)) {
             throw new Error("Username is already in use");
         }

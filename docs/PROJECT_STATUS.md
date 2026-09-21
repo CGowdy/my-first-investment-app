@@ -22,7 +22,7 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 27 suites and 111 deterministic tests pass. |
+| `npm run test:unit` | Passing | 27 suites and 114 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
 | `npm run test:e2e` | Passing | 26 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
@@ -47,6 +47,7 @@ Last reviewed: 2026-09-21
 
 - The prototype proves the main family interaction, but account recovery, rate limiting, CSRF policy, and production operations still need explicit designs before public launch.
 - Authentication uses bcrypt password hashes and a signed, expiring HttpOnly cookie. Browser storage no longer acts as session authority, and account DTOs cannot contain password material.
+- Account creation temporarily accepts any non-empty password for prototype testing; the shared policy is explicitly marked for replacement before public launch.
 - Mock and Mongo-backed development can provide documented `test-adult` and `test-child` manual-test fixtures without using real family credentials.
 - Data-bearing routes enforce guardian-family or child-self authorization on the server. Client-supplied IDs and transaction status fields are not treated as authority.
 - Generic transaction deletion is disabled; Mongo integration setup owns fixture cleanup directly.

@@ -1,6 +1,7 @@
 import type {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {ApprovalStatus, type Transaction} from "@models/transaction";
 import type {StoredUser} from "../server/auth/types";
+import {isValidPrototypePassword} from "./prototype-password-policy";
 
 export interface ChildAccountProvisioningCommand {
     childId: string;
@@ -20,7 +21,7 @@ export function parseCreateChildAccount(value: unknown): CreateChildAccountInput
     const displayName = typeof input.displayName === "string" ? input.displayName.trim() : "";
     if (
         username.length < 1 || username.length > 128
-        || typeof input.password !== "string" || input.password.length < 8 || input.password.length > 256
+        || !isValidPrototypePassword(input.password)
         || displayName.length < 1 || displayName.length > 128
         || typeof input.balance !== "number" || !Number.isFinite(input.balance) || input.balance < 0 || input.balance > 1_000_000_000
         || typeof input.interest !== "number" || !Number.isFinite(input.interest) || input.interest < 0 || input.interest > 100

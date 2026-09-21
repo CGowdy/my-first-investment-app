@@ -53,7 +53,7 @@ describe("guardian registration", () => {
         const response = await POST(registration({
             username: "test-adult",
             displayName: "Test Adult",
-            password: "short",
+            password: "",
         }));
 
         expect(response.status).toBe(400);

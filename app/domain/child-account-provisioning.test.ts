@@ -53,6 +53,15 @@ describe("parseCreateChildAccount", () => {
         expect(parseCreateChildAccount(valid)).toEqual({...valid, username: "kid", displayName: "Kid"});
     });
 
+    it("temporarily accepts a one-character password", () => {
+        expect(parseCreateChildAccount({...valid, password: "x"}))
+            .toEqual({...valid, username: "kid", displayName: "Kid", password: "x"});
+    });
+
+    it("still rejects an empty password", () => {
+        expect(parseCreateChildAccount({...valid, password: ""})).toBeNull();
+    });
+
     it.each([
         ["username", {...valid, username: "u".repeat(129)}],
         ["display name", {...valid, displayName: "d".repeat(129)}],

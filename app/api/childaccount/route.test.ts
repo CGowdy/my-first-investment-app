@@ -38,7 +38,7 @@ function request(overrides: Record<string, unknown> = {}): Request {
         method: "POST",
         body: JSON.stringify({
             username: "kid",
-            password: "password",
+            password: "x",
             displayName: "Kid",
             balance: 25,
             interest: 5,

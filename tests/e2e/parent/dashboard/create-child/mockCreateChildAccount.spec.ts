@@ -57,7 +57,7 @@ test.describe('Mock Create Child Account', async () => {
     test('should explain when a username is already in use', async ({page}) => {
         await page.getByLabel('Display Name').fill('Another Child');
         await page.getByLabel('Username').fill('child1');
-        await page.getByLabel('Password').fill('password');
+        await page.getByLabel('Password').fill('x');
         await page.getByLabel('Starting Balance').fill('100');
         await page.getByLabel('Interest').fill('5');
         await page.getByRole('button', {name: 'Create Account'}).click();

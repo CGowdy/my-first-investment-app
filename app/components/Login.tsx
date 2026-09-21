@@ -81,7 +81,7 @@ export default function Login() {
 						if (event.key === 'Enter') void register();
 					}}
 				/>
-				<p className="mt-1 text-xs text-slate-500">Use at least 8 characters.</p>
+				<p className="mt-1 text-xs text-slate-500">Any non-empty password works during prototype testing.</p>
 			</div> : null}
 			{error ? <div role="alert" className={"text-sm font-medium text-red-700"}>{error}</div>:null}
 			<div className="mt-4 flex flex-wrap items-center gap-3">
