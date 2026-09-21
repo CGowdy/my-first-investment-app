@@ -96,7 +96,7 @@ describe("request approval authorization and transitions", () => {
             approved: ApprovalStatus.Approved,
             originalBalance: 25,
             finalBalance: 15,
-            approvedBy: familyId,
+            actorId: familyId,
             approvedAt: expect.any(Date),
         }, databaseSession);
         expect(mockedUpdateOneById).toHaveBeenCalledWith(

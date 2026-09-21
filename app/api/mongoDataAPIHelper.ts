@@ -164,10 +164,15 @@ export async function findMany<T>(collection: string, filter: object = {}, sessi
     }
 }
 
-export async function insertOne<T>(collection: string, documentData: T): Promise<InsertOneResponse | null> {
+export async function insertOne<T>(
+    collection: string,
+    documentData: T,
+    session?: ClientSession,
+): Promise<InsertOneResponse | null> {
     try {
         const result = await (await getCollection(collection)).insertOne(
             toMongoValue(documentData) as Document,
+            {session},
         );
         return {insertedId: result.insertedId.toString()};
     } catch (error) {

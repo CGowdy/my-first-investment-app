@@ -21,11 +21,11 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 16 suites and 62 deterministic tests pass. |
+| `npm run test:unit` | Passing | 18 suites and 71 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
-| `npm run test:e2e` | Passing | 22 mock-backed Chromium tests pass using a Playwright-managed local server. |
+| `npm run test:e2e` | Passing | 24 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
-| Mongo Playwright integration | Passing | 22 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs. |
+| Mongo Playwright integration | Passing | 23 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs. |
 
 ## MongoDB Atlas status
 
@@ -49,6 +49,7 @@ Last reviewed: 2026-09-21
 - Data-bearing routes enforce guardian-family or child-self authorization on the server. Client-supplied IDs and transaction status fields are not treated as authority.
 - Generic transaction deletion is disabled; Mongo integration setup owns fixture cleanup directly.
 - Purchase-request approval uses one shared domain decision for mock and Mongo paths, records the approving guardian and time, conditionally transitions a pending request, and updates its before/after ledger values and child balance in one MongoDB transaction. The browser no longer receives a generic balance-overwrite operation.
+- Parent balance adjustments use one shared domain decision for mock and Mongo paths and atomically write the audited ledger entry with the resulting child balance. The API now identifies the adjusted child explicitly in its route.
 - The mock-client seam is valuable and should remain, ideally behind application-level ports rather than browser transport details.
 - Parent adjustment, request approval, and interest accrual need one consistent transaction-ledger policy.
 - Responsive web/PWA is the cheapest way to validate the child experience before committing to a separate native app.

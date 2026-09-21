@@ -25,6 +25,7 @@ const client = new MongoClient(uri);
 const parentId = new ObjectId("65ada4aaf492160c42729148");
 const firstChildId = new ObjectId("65ada4aaf492160c42729149");
 const spendChildId = new ObjectId("65ada4aaf492160c4272914a");
+const adjustmentChildId = new ObjectId("65ada4aaf492160c4272914b");
 const fixtureKey = "playwright-mongo-integration";
 
 const today = new Date();
@@ -80,6 +81,20 @@ try {
                 upsert: true,
             },
         },
+        {
+            replaceOne: {
+                filter: {_id: adjustmentChildId.toHexString()},
+                replacement: {
+                    _id: adjustmentChildId.toHexString(),
+                    username: "adjustmentchild",
+                    passwordHash,
+                    displayName: "Adjustment Child",
+                    isChildAccount: true,
+                    fixtureKey,
+                },
+                upsert: true,
+            },
+        },
     ]);
 
     await childAccounts.bulkWrite([
@@ -117,10 +132,27 @@ try {
                 upsert: true,
             },
         },
+        {
+            replaceOne: {
+                filter: {_id: adjustmentChildId},
+                replacement: {
+                    _id: adjustmentChildId,
+                    username: "adjustmentchild",
+                    displayName: "Adjustment Child",
+                    isChildAccount: true,
+                    parentId: parentId.toHexString(),
+                    balance: 60,
+                    balanceLastUpdated: today,
+                    interest: 5,
+                    fixtureKey,
+                },
+                upsert: true,
+            },
+        },
     ]);
 
     await transactions.deleteMany({
-        childId: {$in: [firstChildId.toHexString(), spendChildId.toHexString()]},
+        childId: {$in: [firstChildId.toHexString(), spendChildId.toHexString(), adjustmentChildId.toHexString()]},
     });
 
     console.log("MongoDB integration fixtures are ready");

@@ -35,7 +35,7 @@ export function approvePurchaseRequest(
             approved: ApprovalStatus.Approved,
             originalBalance: child.balance,
             finalBalance: balance,
-            approvedBy: guardianId,
+            actorId: guardianId,
             approvedAt,
         },
     };

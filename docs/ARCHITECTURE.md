@@ -35,7 +35,7 @@ The data model centers on users, child accounts, and transactions. Balances are 
 
 ## Main architectural risks
 
-1. Child creation, parent adjustments, and login-time interest still use separate writes; request approval now updates its ledger record and child balance in one MongoDB transaction.
+1. Child creation and login-time interest still use separate writes; request approval and parent adjustments now update their ledger records and child balances in MongoDB transactions.
 2. Several API boundaries still need a shared validation and error-response contract.
 3. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
 4. Business behavior is spread across components, clients, route handlers, and login side effects.

@@ -24,6 +24,7 @@ const fixtureKey = "playwright-mongo-integration";
 const childIds = [
     new ObjectId("65ada4aaf492160c42729149").toHexString(),
     new ObjectId("65ada4aaf492160c4272914a").toHexString(),
+    new ObjectId("65ada4aaf492160c4272914b").toHexString(),
 ];
 
 try {

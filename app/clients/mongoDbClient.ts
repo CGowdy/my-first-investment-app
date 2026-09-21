@@ -2,7 +2,7 @@ import IClient from "@models/client";
 import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {Option} from "@models/option";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
-import {ApprovalStatus, Transaction} from "@models/transaction";
+import {Transaction} from "@models/transaction";
 import type {DeleteResponse} from "@mongoDataApiHelper";
 
 export default class MongoDbClient implements IClient {
@@ -107,16 +107,16 @@ export default class MongoDbClient implements IClient {
         return response as Promise<Transaction[]>;
     }
 
-    adjustBalance(childUserId: string, adjustment: number, options?: Option | undefined): Promise<ChildAccount> {
-        const transactionData: Transaction = {
-            amount: adjustment,
-            childId: childUserId,
-            approved: ApprovalStatus.Approved,
-            reason: 'Parent Balance Adjustment',
-            date: new Date()
+    async adjustBalance(childUserId: string, adjustment: number, options?: Option | undefined): Promise<ChildAccount> {
+        const response = await fetch(`/api/childaccount/${childUserId}/adjustment`, {
+            method: "POST",
+            body: JSON.stringify({amount: adjustment}),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to adjust balance");
         }
-        const response = this.post<ChildAccount>(`/api/parent/${childUserId}/adjustment`, transactionData);
-        return response as Promise<ChildAccount>;
+        return await response.json() as ChildAccount;
     }
 
     private async get<T>(url: string, body?: any, headers?: any):Promise<T | null> {

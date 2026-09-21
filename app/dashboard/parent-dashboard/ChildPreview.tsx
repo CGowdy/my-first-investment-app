@@ -18,6 +18,7 @@ export function ChildPreview({child}: ChildPreviewProps) {
     const [showRequests, setShowRequests] = useState(false);
     const [showAdjustment, setShowAdjustment] = useState(false);
     const [adjustment, setAdjustment] = useState(0);
+    const [adjustmentError, setAdjustmentError] = useState("");
     const [currentBalance, setCurrentBalance] = useState(child.balance);
     const client = useContext(ClientContext) as unknown as IClient
 
@@ -59,12 +60,14 @@ export function ChildPreview({child}: ChildPreviewProps) {
         try {
             if (!child._id) return;
             setLoading(true);
+            setAdjustmentError("");
             const newBalance = await client.adjustBalance(child._id, adjustment);
 
             setCurrentBalance(newBalance.balance);
             setLoading(false);
         } catch (error) {
             console.log(error);
+            setAdjustmentError(error instanceof Error ? error.message : "Unable to adjust balance");
             setLoading(false);
         }
     }
@@ -126,6 +129,7 @@ export function ChildPreview({child}: ChildPreviewProps) {
                         <Input className={`border-1 border-black`} inputText={adjustment.toString()} onInputChanged={(newInput) => setAdjustment(Number(newInput))}/>
                         <Button variant={'secondary'} buttonText={'Submit'} onButtonPressed={adjustBalance}/>
                     </div>}
+                    {adjustmentError && <p role="alert" className="text-red-700">{adjustmentError}</p>}
 
                     {!loadingRequests && showRequests && pendingRequests?.map((request: Transaction) => (
                         <div id={request._id} key={request._id} className={'my-4 border-t border-gray-700'}>

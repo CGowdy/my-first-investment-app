@@ -31,7 +31,7 @@ describe("approvePurchaseRequest", () => {
                 approved: ApprovalStatus.Approved,
                 originalBalance: 25,
                 finalBalance: 15,
-                approvedBy: "guardian-1",
+                actorId: "guardian-1",
                 approvedAt,
             },
         });

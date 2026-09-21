@@ -7,6 +7,7 @@ import {Option} from "@models/option";
 import {guid} from '../helper-functions';
 import {compare, hash} from "bcryptjs";
 import {approvePurchaseRequest} from "../domain/purchase-request";
+import {createBalanceAdjustment} from "../domain/balance-adjustment";
 
 
 type MockUser = IUser & {passwordHash: string};
@@ -87,7 +88,7 @@ export default class MockClient implements IClient {
             if (options?.error) reject(new Error(options.error));
             const child = mockChildren.find(child => child._id === userId);
             if (!child) reject(new Error(`User with id ${userId} not found`));
-            if (child) resolve(mockRequests.filter(request => request.childId === child._id && request.approved !== ApprovalStatus.Rejected))
+            if (child) resolve(mockRequests.filter(request => request.childId === child._id && request.approved === ApprovalStatus.Pending))
         });
     }
 
@@ -96,7 +97,7 @@ export default class MockClient implements IClient {
             if (options?.error) reject(new Error(options.error));
             const parent = mockUsers.find(user => user._id === parentUserId);
             if (!parent) reject(new Error(`User with id ${parentUserId} not found`));
-            resolve(mockRequests.filter(request => mockChildren.filter(child => child.parentId === parentUserId).map(child => child._id).includes(request.childId)  && request.approved !== ApprovalStatus.Rejected));
+            resolve(mockRequests.filter(request => mockChildren.filter(child => child.parentId === parentUserId).map(child => child._id).includes(request.childId)  && request.approved === ApprovalStatus.Pending));
         });
     }
 
@@ -126,7 +127,7 @@ export default class MockClient implements IClient {
             }
             const transactionToApprove = mockRequests[transactionIndex];
             const child = mockChildren.find(child => child._id === transactionToApprove.childId);
-            if (!child || !this.session?._id || this.session.isChildAccount || child.parentId !== this.session._id) {
+            if (!child?._id || !this.session?._id || this.session.isChildAccount || child.parentId !== this.session._id) {
                 reject(new Error('Request not found'));
                 return;
             }
@@ -171,12 +172,20 @@ export default class MockClient implements IClient {
         return new Promise((resolve, reject) => {
             if (options?.error) reject(new Error(options.error));
             const child = mockChildren.find(child => child._id === childUserId);
-            if (child) {
-                child.balance += adjustment;
-                resolve(child);
-            } else {
+            if (!child || !this.session?._id || this.session.isChildAccount || child.parentId !== this.session._id) {
                 reject(new Error(`Child with id ${childUserId} not found`));
+                return;
             }
+            const decision = createBalanceAdjustment(child, childUserId, adjustment, this.session._id, new Date());
+            if (!decision.ok) {
+                reject(new Error(decision.reason === "INSUFFICIENT_BALANCE"
+                    ? "Adjustment cannot make the balance negative"
+                    : "Adjustment must be a non-zero finite number"));
+                return;
+            }
+            mockRequests.push({...decision.transaction, _id: guid()});
+            child.balance = decision.balance;
+            resolve(child);
         })
     }
 

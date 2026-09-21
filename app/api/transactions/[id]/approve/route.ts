@@ -26,7 +26,7 @@ export async function POST(_req: Request, {params}: {params: Promise<{id: string
                 approved: decision.transaction.approved,
                 originalBalance: decision.transaction.originalBalance,
                 finalBalance: decision.transaction.finalBalance,
-                approvedBy: decision.transaction.approvedBy,
+                actorId: decision.transaction.actorId,
                 approvedAt: decision.transaction.approvedAt,
             }, databaseSession);
             if (!transactionUpdate?.matchedCount) return {error: "INVALID_TRANSITION" as const};
