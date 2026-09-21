@@ -6,8 +6,8 @@ export interface LoginData {
     password: string;
 }
 
-export type AuthenticatedUser = Omit<IUser, "password">;
-export type AuthenticatedChildAccount = Omit<ChildAccount, "password">;
+export type AuthenticatedUser = IUser;
+export type AuthenticatedChildAccount = ChildAccount;
 export type AuthenticatedAccount = AuthenticatedUser | AuthenticatedChildAccount;
 
 export interface ApiError {

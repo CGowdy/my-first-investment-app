@@ -1,4 +1,7 @@
 import type {LoginData} from "@models/auth";
+import type {ChildAccount} from "@models/child-account";
+import type {IUser} from "@models/user";
+import type {StoredUser} from "../../server/auth/types";
 
 const MAX_USERNAME_LENGTH = 128;
 const MAX_PASSWORD_LENGTH = 256;
@@ -28,7 +31,24 @@ export function parseLoginData(value: unknown): LoginData | null {
     };
 }
 
-export function withoutPassword<T extends {password: string}>(value: T): Omit<T, "password"> {
-    const {password: _password, ...safeValue} = value;
-    return safeValue;
+export function toAuthenticatedUser(user: StoredUser): IUser {
+    return {
+        _id: user._id,
+        username: user.username,
+        displayName: user.displayName,
+        isChildAccount: user.isChildAccount,
+    };
+}
+
+export function toAuthenticatedChildAccount(account: ChildAccount): ChildAccount {
+    return {
+        _id: account._id,
+        username: account.username,
+        displayName: account.displayName,
+        isChildAccount: true,
+        parentId: account.parentId,
+        balance: account.balance,
+        balanceLastUpdated: account.balanceLastUpdated,
+        interest: account.interest,
+    };
 }

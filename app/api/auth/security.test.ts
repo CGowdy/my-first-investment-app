@@ -1,4 +1,4 @@
-import {parseLoginData, withoutPassword} from "./security";
+import {parseLoginData, toAuthenticatedUser} from "./security";
 
 describe("authentication boundary", () => {
     describe("parseLoginData", () => {
@@ -24,11 +24,11 @@ describe("authentication boundary", () => {
         });
     });
 
-    it("removes passwords before returning account data", () => {
-        expect(withoutPassword({
+    it("returns an allowlisted account DTO without the password hash", () => {
+        expect(toAuthenticatedUser({
             _id: "parent-id",
             username: "parent1",
-            password: "secret",
+            passwordHash: "secret-hash",
             displayName: "Parent One",
         })).toEqual({
             _id: "parent-id",

@@ -33,7 +33,7 @@ See:
    npm ci
    ```
 
-2. Copy `.env.example` to `.env.local`. Keep `ENVIRONMENT=mock` for local UI work that should not call MongoDB. Mongo-backed work additionally requires the server-only MongoDB username, password, cluster host, and database variables shown in the example. A complete `MONGODB_URI` may be used instead.
+2. Copy `.env.example` to `.env.local`. Keep `ENVIRONMENT=mock` for local UI work that should not call MongoDB. Mongo-backed work additionally requires the server-only MongoDB username, password, cluster host, database, and a random `AUTH_SECRET` of at least 32 characters. A complete `MONGODB_URI` may be used instead.
 
 3. Start the application:
 

@@ -22,7 +22,7 @@ export default function Nav() {
 					<Link key={link.href} href={link.href} className={"mx-2"}>{link.text}</Link>
 				))}
 				<div className={"grow"}/>
-				{user ? <Link key={"#"} href={"#"} onClick={logout}>Logout</Link> : null}
+				{user ? <Link key={"#"} href={"#"} onClick={() => void logout()}>Logout</Link> : null}
 			</div>
 		</div>
 	);

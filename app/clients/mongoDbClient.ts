@@ -2,7 +2,7 @@ import IClient from "@models/client";
 import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {Option} from "@models/option";
 import {IUser} from "@models/user";
-import {ChildAccount} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import type {DeleteResponse, UpdateOneResponse} from "@mongoDataApiHelper";
 
@@ -10,11 +10,30 @@ export default class MongoDbClient implements IClient {
 
     async auth(userData: LoginData, options?: Option | undefined): Promise<AuthenticatedAccount | null> {
         try {
-            return await this.post<AuthenticatedAccount>(`/api/auth`, userData);
+            const response = await fetch(`/api/auth`, {
+                method: "POST",
+                body: JSON.stringify(userData),
+            });
+            if (!response.ok) return null;
+            return await response.json() as AuthenticatedAccount;
         } catch (e) {
             console.log(e);
             return null;
         }
+    }
+
+    async getSession(): Promise<AuthenticatedAccount | null> {
+        try {
+            const response = await fetch(`/api/auth`);
+            if (!response.ok) return null;
+            return await response.json() as AuthenticatedAccount;
+        } catch {
+            return null;
+        }
+    }
+
+    async logout(): Promise<void> {
+        await fetch(`/api/auth`, {method: "DELETE"});
     }
 
     async updateChildAccount(user: IUser, options?: Option | undefined): Promise<ChildAccount|null> {
@@ -28,7 +47,7 @@ export default class MongoDbClient implements IClient {
         }
     }
 
-    async addChildUser(childData: ChildAccount, options?: Option | undefined): Promise<ChildAccount | null> {
+    async addChildUser(childData: CreateChildAccountInput, options?: Option | undefined): Promise<ChildAccount | null> {
         try{
             return await this.post<ChildAccount>(`/api/childaccount`, childData);
         } catch(e){

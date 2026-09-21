@@ -10,6 +10,8 @@ const mockLoginData = { username: 'testUser', password: 'password' };
 // Mock implementation for ClientContext
 const mockClientContext = {
     auth: jest.fn(),
+    getSession: jest.fn(),
+    logout: jest.fn(),
     addChildUser: jest.fn(),
     updateChildAccount: jest.fn(),
     deleteChildAccount: jest.fn(),
@@ -37,16 +39,9 @@ const ConsumerComponent = () => {
 
 describe('AuthProvider', () => {
     beforeEach(() => {
-        // Mock localStorage
-        Storage.prototype.setItem = jest.fn();
-        Storage.prototype.getItem = jest.fn((key) =>{
-            if(key === 'user') return JSON.stringify(mockUser);
-            return null;
-        });
-        Storage.prototype.removeItem = jest.fn();
-
-        localStorage.clear();
         jest.resetAllMocks(); // Reset mock functions before each test
+        mockClientContext.getSession.mockResolvedValue(null);
+        mockClientContext.logout.mockResolvedValue(undefined);
     });
 
     it('logs in and sets user correctly', async () => {
@@ -68,8 +63,7 @@ describe('AuthProvider', () => {
         const userDiv = await findByTestId('user');
         expect(userDiv).toHaveTextContent(mockUser.username);
 
-        // Ensure the correct key is being used and mock is checked
-        expect(localStorage.setItem).toHaveBeenCalledWith('user', JSON.stringify(mockUser));
+        expect(mockClientContext.auth).toHaveBeenCalledWith(mockLoginData);
     });
 
     it('handles login failure correctly', async () => {
@@ -90,6 +84,33 @@ describe('AuthProvider', () => {
 
         const noUserDiv = await findByTestId('no-user');
         expect(noUserDiv).toHaveTextContent('No User');
+    });
+
+    it('does not let stale session restoration overwrite a successful login', async () => {
+        let resolveSession: (user: null) => void = () => undefined;
+        mockClientContext.getSession.mockReturnValue(new Promise(resolve => {
+            resolveSession = resolve;
+        }));
+        mockClientContext.auth.mockResolvedValue(mockUser);
+
+        const {getByTestId, findByTestId} = render(
+            <ClientContext.Provider value={mockClientContext}>
+                <AuthProvider>
+                    <ConsumerComponent />
+                </AuthProvider>
+            </ClientContext.Provider>
+        );
+
+        act(() => {
+            getByTestId('login-button').click();
+        });
+        await expect(findByTestId('user')).resolves.toHaveTextContent(mockUser.username);
+
+        await act(async () => {
+            resolveSession(null);
+        });
+
+        expect(getByTestId('user')).toHaveTextContent(mockUser.username);
     });
 
     it('clears user on logout', async () => {
@@ -120,6 +141,6 @@ describe('AuthProvider', () => {
 
         const noUserDiv = await findByTestId('no-user');
         expect(noUserDiv).toHaveTextContent('No User');
-        expect(localStorage.removeItem).toHaveBeenCalledWith('user');
+        expect(mockClientContext.logout).toHaveBeenCalled();
     });
 });

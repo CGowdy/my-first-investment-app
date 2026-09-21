@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test';
 import {configMongoEnvironment, loginAsMongoParent} from '@playwrightHelpers';
-import {ChildAccount} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 
 
 test.describe('Mock Create Child Account', async () => {
@@ -45,21 +45,25 @@ test.describe('Mock Create Child Account', async () => {
 
 
     test('should create a child account', async ({page}) => {
-        const newChildAccount : ChildAccount = {
-            _id: 'test',
-            isChildAccount: true,
+        const newChildAccount : CreateChildAccountInput = {
             displayName: 'Test Child',
             username: 'testchild',
             password: 'password',
             balance: 100.21,
-            balanceLastUpdated: new Date(),
             interest: 5,
-            parentId: 'test'
         }
         await page.route(`**/api/childaccount`, async (route) => {
+            const {password: _password, ...account} = newChildAccount;
+            const response: ChildAccount = {
+                ...account,
+                _id: "test",
+                parentId: "parent-id",
+                balanceLastUpdated: new Date(),
+                isChildAccount: true,
+            };
             await route.fulfill({
                 status: 200,
-                body: JSON.stringify(newChildAccount)
+                body: JSON.stringify(response)
             });
         });
 

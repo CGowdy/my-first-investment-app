@@ -1,9 +1,9 @@
 import {spawnSync} from "node:child_process";
 
-function runNodeScript(script, args = []) {
+function runNodeScript(script, args = [], environment = process.env) {
     return spawnSync(process.execPath, [script, ...args], {
         cwd: process.cwd(),
-        env: process.env,
+        env: environment,
         stdio: "inherit",
     });
 }
@@ -18,7 +18,11 @@ try {
         const tests = runNodeScript("node_modules/@playwright/test/cli.js", [
             "test",
             "--project=mongo-chromium",
-        ]);
+            "--workers=1",
+        ], {
+            ...process.env,
+            AUTH_SECRET: process.env.AUTH_SECRET ?? "playwright-integration-only-session-secret",
+        });
         exitCode = tests.status ?? 1;
     }
 } finally {

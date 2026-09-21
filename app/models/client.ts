@@ -1,14 +1,16 @@
 import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {Option} from "@models/option";
-import {ChildAccount} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {Transaction} from "@models/transaction";
 import {IUser} from "@models/user";
 
 export default interface IClient {
     auth(userData: LoginData, options?:Option): Promise<AuthenticatedAccount | null>;
+    getSession(): Promise<AuthenticatedAccount | null>;
+    logout(): Promise<void>;
 
     //Child CRUD
-    addChildUser(childData: ChildAccount, options?:Option): Promise<ChildAccount | null>;
+    addChildUser(childData: CreateChildAccountInput, options?:Option): Promise<ChildAccount | null>;
     updateChildAccount(child: IUser, options?:Option): Promise<ChildAccount | null>;
     deleteChildAccount(childId: string, options?:Option): Promise<void>;
     getChildAccount(childUserId: string): Promise<ChildAccount>;

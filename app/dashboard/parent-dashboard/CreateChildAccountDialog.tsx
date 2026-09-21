@@ -2,8 +2,7 @@ import React, {useContext, useState} from "react";
 import {Dialog} from "@headlessui/react";
 import Button from "@components/button/Button";
 import LabelledInput from "@components/LabeledInput";
-import {ChildAccount} from "@models/child-account";
-import {AuthContext} from "@contexts/AuthContext";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {ClientContext} from "@contexts/ClientContext";
 
 interface CreateChildAccountDialogProps {
@@ -13,42 +12,34 @@ interface CreateChildAccountDialogProps {
 }
 
 export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> = ({isOpen, onRequestClose, onCreateChildAccount}) => {
-    const [childAccountForm, setChildAccountForm] = useState<ChildAccount>({
+    const [childAccountForm, setChildAccountForm] = useState<CreateChildAccountInput>({
         displayName: "",
         username: "",
         password: "",
-        parentId: "",
         balance:0,
-        balanceLastUpdated: new Date(),
         interest:0
     });
-    const {user} = useContext(AuthContext)!;
     const client = useContext(ClientContext)!;
 
     const handleChange = (field:string, value:string|number) => {
         setChildAccountForm(prevState => ({...prevState, [field]: value}));
     }
     const handleOnCreate = async () => {
-        const child: ChildAccount = {
-            isChildAccount: true,
+        const child: CreateChildAccountInput = {
             displayName: childAccountForm.displayName,
             username: childAccountForm.username,
             password: childAccountForm.password,
             balance: childAccountForm.balance,
-            balanceLastUpdated: new Date(),
             interest: childAccountForm.interest,
-            parentId: user?._id??"" // This should be set to the current user's id
         };
         const newChildAccount = await client.addChildUser(child);
         if(!newChildAccount) return;    //TODO: handle error better
-        onCreateChildAccount(child);
+        onCreateChildAccount(newChildAccount);
         setChildAccountForm({
             displayName: "",
             username: "",
             password: "",
-            parentId: "",
             balance:0,
-            balanceLastUpdated: new Date(),
             interest:0
         })
     };

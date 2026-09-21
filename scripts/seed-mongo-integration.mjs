@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import {MongoClient, ObjectId} from "mongodb";
+import bcrypt from "bcryptjs";
 
 dotenv.config({path: ".env.local"});
 
@@ -28,6 +29,7 @@ const fixtureKey = "playwright-mongo-integration";
 
 const today = new Date();
 today.setHours(12, 0, 0, 0);
+const passwordHash = await bcrypt.hash("pass123", 12);
 
 try {
     const database = client.db(process.env.MONGODB_DATABASE);
@@ -42,7 +44,7 @@ try {
                 replacement: {
                     _id: parentId,
                     username: "firstmongouser",
-                    password: "pass123",
+                    passwordHash,
                     displayName: "First Mongo Parent",
                     isChildAccount: false,
                     fixtureKey,
@@ -56,7 +58,7 @@ try {
                 replacement: {
                     _id: firstChildId.toHexString(),
                     username: "firstmongochild",
-                    password: "pass123",
+                    passwordHash,
                     displayName: "First Mongo Child",
                     isChildAccount: true,
                     fixtureKey,
@@ -70,7 +72,7 @@ try {
                 replacement: {
                     _id: spendChildId.toHexString(),
                     username: "spendmoneychild",
-                    password: "pass123",
+                    passwordHash,
                     displayName: "Spend Money Child",
                     isChildAccount: true,
                     fixtureKey,
@@ -87,7 +89,6 @@ try {
                 replacement: {
                     _id: firstChildId,
                     username: "firstmongochild",
-                    password: "pass123",
                     displayName: "First Mongo Child",
                     isChildAccount: true,
                     parentId: parentId.toHexString(),
@@ -105,7 +106,6 @@ try {
                 replacement: {
                     _id: spendChildId,
                     username: "spendmoneychild",
-                    password: "pass123",
                     displayName: "Spend Money Child",
                     isChildAccount: true,
                     parentId: parentId.toHexString(),

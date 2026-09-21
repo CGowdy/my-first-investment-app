@@ -1,33 +1,49 @@
 import IClient from '@models/client';
 import type {AuthenticatedAccount, LoginData} from "@models/auth";
-import {ChildAccount} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
 import {guid} from '../helper-functions';
+import {compare, hash} from "bcryptjs";
 
+
+type MockUser = IUser & {passwordHash: string};
+
+const mockPasswordHash = "$2b$12$198GTcO3AK1lq.dt7ZNZV.gdHaOlhOB23msT2Ga0MwALWj2WhdDFm";
 
 export const mockChildren: ChildAccount[] = [
-    {_id: "2", username: 'child1', password: 'pass123', displayName: 'Child 1', parentId: "1", balance: 250, balanceLastUpdated: new Date(), interest: 12},
-    {_id: "123", username: 'child2', password: 'pass123', displayName: 'Child 2', parentId: "1", balance: 1150, balanceLastUpdated: new Date(), interest: 12},
+    {_id: "2", username: 'child1', displayName: 'Child 1', parentId: "1", balance: 250, balanceLastUpdated: new Date(), interest: 12},
+    {_id: "123", username: 'child2', displayName: 'Child 2', parentId: "1", balance: 1150, balanceLastUpdated: new Date(), interest: 12},
 ];
-export const mockUsers: IUser[] = [
-    {_id: "1", username: 'parent1', password: 'pass123', displayName: 'Parent One'},
-    {_id: "2", username: 'child1', password: 'pass123', displayName: 'Child 1', isChildAccount: true},
-    {_id: "123", username: 'child2', password: 'pass123', displayName: 'Child 2', isChildAccount: true}
+export const mockUsers: MockUser[] = [
+    {_id: "1", username: 'parent1', passwordHash: mockPasswordHash, displayName: 'Parent One'},
+    {_id: "2", username: 'child1', passwordHash: mockPasswordHash, displayName: 'Child 1', isChildAccount: true},
+    {_id: "123", username: 'child2', passwordHash: mockPasswordHash, displayName: 'Child 2', isChildAccount: true}
 ];
 
 export const mockRequests: Transaction[] = []
 
 export default class MockClient implements IClient {
+    private session: AuthenticatedAccount | null = null;
 
     async auth(userData: LoginData): Promise<AuthenticatedAccount | null> {
-        const user = mockUsers.find(user => user.username === userData.username && user.password === userData.password);
-        const child = mockChildren.find(child => child.username === userData.username && child.password === userData.password);
-        if (!user) return null;
+        const user = mockUsers.find(user => user.username === userData.username);
+        if (!user || !await compare(userData.password, user.passwordHash)) return null;
+        const child = mockChildren.find(child => child.username === userData.username);
         const authenticated = {...user, ...child};
-        const {password: _password, ...safeAccount} = authenticated;
-        return safeAccount;
+        const {passwordHash: _passwordHash, ...safeAccount} = authenticated;
+        this.session = safeAccount;
+        return this.session;
+    }
+
+    getSession(): Promise<AuthenticatedAccount | null> {
+        return Promise.resolve(this.session);
+    }
+
+    logout(): Promise<void> {
+        this.session = null;
+        return Promise.resolve();
     }
 
     updateChildAccount(user: IUser): Promise<ChildAccount|null>{
@@ -35,11 +51,27 @@ export default class MockClient implements IClient {
     }
 
     //Child CRUD
-    async addChildUser(childData: ChildAccount): Promise<ChildAccount| null> {
-        childData._id = guid();
-        mockUsers.push(childData);
-        mockChildren.push(childData);
-        return Promise.resolve(childData);
+    async addChildUser(childData: CreateChildAccountInput): Promise<ChildAccount| null> {
+        if (!this.session?._id || this.session.isChildAccount) return null;
+        const child: ChildAccount = {
+            _id: guid(),
+            username: childData.username,
+            displayName: childData.displayName,
+            parentId: this.session._id,
+            balance: childData.balance,
+            balanceLastUpdated: new Date(),
+            interest: childData.interest,
+            isChildAccount: true,
+        };
+        mockUsers.push({
+            _id: child._id,
+            username: child.username,
+            displayName: child.displayName,
+            isChildAccount: true,
+            passwordHash: await hash(childData.password, 12),
+        });
+        mockChildren.push(child);
+        return Promise.resolve(child);
     }
 
     getChildAccounts(parentId: string): Promise<ChildAccount[]|null> {

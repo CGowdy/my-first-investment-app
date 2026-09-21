@@ -6,3 +6,11 @@ export interface ChildAccount extends IUser {
     balanceLastUpdated: Date;
     interest: number;
 }
+
+export interface CreateChildAccountInput {
+    displayName: string;
+    username: string;
+    password: string;
+    balance: number;
+    interest: number;
+}

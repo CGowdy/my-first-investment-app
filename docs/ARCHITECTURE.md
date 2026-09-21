@@ -16,7 +16,7 @@ ClientContext -> IClient
           MongoDB Node.js driver
 ```
 
-`AuthContext` keeps the signed-in user in React state and browser storage. The dashboard selects a child or parent view from `isChildAccount`. `IClient` provides a replaceable browser-side data facade, which is useful for deterministic tests, but currently mixes transport concerns with application operations.
+`AuthContext` restores a server-issued, signed HttpOnly session into React state through the selected data client. The dashboard selects a child or parent view from `isChildAccount`. `IClient` provides a replaceable browser-side data facade, which is useful for deterministic tests, but currently mixes transport concerns with application operations.
 
 The data model centers on users, child accounts, and transactions. Balances are also stored directly on child accounts, while transactions provide a partial history. Interest is calculated during child login.
 
@@ -34,14 +34,13 @@ The data model centers on users, child accounts, and transactions. Balances are 
 
 ## Main architectural risks
 
-1. Authentication is a plaintext credential lookup and browser storage is treated as a session. This is not safe for deployment.
-2. Route handlers do not establish an authenticated actor or verify family ownership before mutations.
-3. Balance changes and transaction writes are separate operations, so failures or concurrent requests can make the ledger and stored balance disagree.
-4. Client and server trust unvalidated JSON, monetary values, IDs, dates, and status transitions.
-5. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
-6. Business behavior is spread across components, clients, route handlers, and login side effects.
-7. Floating-point currency and time-dependent interest calculations can produce surprising results.
-8. A future mobile app would have to depend on unstable, web-shaped endpoints unless an explicit API contract is established.
+1. Route handlers do not yet consistently verify the authenticated session and family ownership before reads or mutations.
+2. Balance changes and transaction writes are separate operations, so failures or concurrent requests can make the ledger and stored balance disagree.
+3. Several API boundaries still trust unvalidated JSON, monetary values, IDs, dates, and status transitions.
+4. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
+5. Business behavior is spread across components, clients, route handlers, and login side effects.
+6. Floating-point currency and time-dependent interest calculations can produce surprising results.
+7. A future mobile app would have to depend on unstable, web-shaped endpoints unless an explicit API contract is established.
 
 ## Target direction
 
