@@ -34,13 +34,12 @@ The data model centers on users, child accounts, and transactions. Balances are 
 
 ## Main architectural risks
 
-1. Route handlers do not yet consistently verify the authenticated session and family ownership before reads or mutations.
-2. Balance changes and transaction writes are separate operations, so failures or concurrent requests can make the ledger and stored balance disagree.
-3. Several API boundaries still trust unvalidated JSON, monetary values, IDs, dates, and status transitions.
-4. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
-5. Business behavior is spread across components, clients, route handlers, and login side effects.
-6. Floating-point currency and time-dependent interest calculations can produce surprising results.
-7. A future mobile app would have to depend on unstable, web-shaped endpoints unless an explicit API contract is established.
+1. Balance changes and transaction writes are separate operations, so failures or concurrent requests can make the ledger and stored balance disagree.
+2. Several API boundaries still need a shared validation and error-response contract.
+3. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
+4. Business behavior is spread across components, clients, route handlers, and login side effects.
+5. Floating-point currency and time-dependent interest calculations can produce surprising results.
+6. A future mobile app would have to depend on unstable, web-shaped endpoints unless an explicit API contract is established.
 
 ## Target direction
 
@@ -70,6 +69,7 @@ Recommended sequencing:
 ## Design constraints for new work
 
 - Route handlers translate HTTP; they should not own core financial-learning rules.
+- Data-bearing routes must authorize the signed session against the requested family or child resource; path and body IDs are never authorization.
 - UI components render state and collect intent; they should not directly enforce authorization or ledger invariants.
 - Every balance-affecting command should produce one durable ledger entry with actor, reason, timestamp, amount, and resulting balance.
 - Status changes should be explicit valid transitions, not arbitrary numeric enum updates.

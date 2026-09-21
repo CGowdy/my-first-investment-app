@@ -1,43 +1,32 @@
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {ChildAccount} from "@models/child-account";
-import {Collection, findMany, updateOneById} from "@mongoDataApiHelper";
+import {Collection, findMany} from "@mongoDataApiHelper";
+import {canManageFamily} from "../../../../server/auth/authorization";
+import {readSession} from "../../../../server/auth/session";
 
-export async function GET(req: Request, {params}:{params:Promise<{id:string}>}){
-    try{
-        const {id} = await params;
-        const childAccountResults = await findMany<ChildAccount>(Collection.ChildAccounts,{parentId: id});
-        if(!childAccountResults) return Response.json([]);
-        const childAccounts = childAccountResults.documents;
-        const transactions = await findMany<Transaction[]>(Collection.Transactions,{
-            childId: {$in: childAccounts!.map(childAccount => { return childAccount._id})},
-            approved: ApprovalStatus.Pending
-        });
-
-        return Response.json(transactions?.documents);
-    }catch (error){
-        return new Response(null,{
-            status:500,
-            statusText:`Server error: ${error}`
-        });
-    }
-}
-
-export async function POST(req: Request){
+export async function GET(_req: Request, {params}: {params: Promise<{id: string}>}) {
     try {
-        const requestData = await req.json() as Transaction;
-        if (!requestData._id) throw new Error('Transaction does not have an id');
-        const newTransactionId = await updateOneById(Collection.Transactions,requestData._id, requestData);
-        if(!newTransactionId?.modifiedCount) throw new Error('Failed to request transaction');
-        const pendingTransactions = await findMany<Transaction>(Collection.Transactions, {
-            childId: requestData.childId,
-            approved: {$eq: ApprovalStatus.Pending}
-        })
-        return Response.json(pendingTransactions?.documents);
-    }
-    catch (error) {
-        return new Response(null, {
-            status: 500,
-            statusText: `Server error: ${error}`
+        const session = await readSession();
+        if (!session) {
+            return Response.json({error: {code: "UNAUTHENTICATED", message: "Authentication required"}}, {status: 401});
+        }
+
+        const {id} = await params;
+        if (!canManageFamily(session, id)) {
+            return Response.json({error: {code: "FORBIDDEN", message: "Access denied"}}, {status: 403});
+        }
+
+        const childAccounts = (await findMany<ChildAccount>(Collection.ChildAccounts, {
+            parentId: session.familyId,
+        }))?.documents ?? [];
+        if (childAccounts.length === 0) return Response.json([]);
+
+        const transactions = await findMany<Transaction>(Collection.Transactions, {
+            childId: {$in: childAccounts.map(child => child._id)},
+            approved: ApprovalStatus.Pending,
         });
+        return Response.json(transactions?.documents ?? []);
+    } catch {
+        return Response.json({error: {code: "SERVER_ERROR", message: "Unable to load requests"}}, {status: 500});
     }
 }

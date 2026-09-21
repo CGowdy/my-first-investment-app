@@ -29,7 +29,10 @@ function parseCreateChildAccount(value: unknown): CreateChildAccountInput | null
 export const POST = async (req: Request) =>{
     try {
         const session = await readSession();
-        if (!session || session.role !== "guardian") {
+        if (!session) {
+            return Response.json({error: {code: "UNAUTHENTICATED", message: "Authentication required"}}, {status: 401});
+        }
+        if (session.role !== "guardian" || session.userId !== session.familyId) {
             return Response.json({error: {code: "FORBIDDEN", message: "Guardian access required"}}, {status: 403});
         }
         const requestData = parseCreateChildAccount(await req.json());
@@ -87,20 +90,6 @@ export const POST = async (req: Request) =>{
         return new Response(null, {
             status: 500,
             statusText: `Server error: ${error}`
-        });
-    }
-}
-
-export const GET = async(req: Request) =>{
-    try{
-        const data = await req.json() as {parentId: string};
-        const result = await findOne<ChildAccount>(Collection.ChildAccounts,{parentId: data.parentId});
-        if(!result?.document) throw new Error('Child account not found');
-        return Response.json(result?.document);
-    }catch (error){
-        return new Response(null,{
-            status:500,
-            statusText:`Server error: ${error}`
         });
     }
 }

@@ -21,7 +21,7 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 11 suites and 43 deterministic tests pass. |
+| `npm run test:unit` | Passing | 14 suites and 55 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
 | `npm run test:e2e` | Passing | 22 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
@@ -36,17 +36,18 @@ Last reviewed: 2026-09-21
 
 ## Highest-priority stabilization work
 
-1. Enforce the authenticated session and family-scoped authorization on every API read and mutation before any public deployment.
-2. Validate API inputs and define consistent error responses.
-3. Complete the transaction-ledger model so every balance change records before/after balances atomically.
-4. Make the live-Mongo Playwright project isolated and safe enough to run as a scheduled integration gate.
+1. Complete the transaction-ledger model so every balance change records before/after balances atomically.
+2. Finish validating API inputs and define a shared error-response contract.
+3. Separate application commands and persisted records from browser-facing DTOs.
+4. Make the live-Mongo Playwright project safe to run as a scheduled integration gate.
 5. Add Firefox/WebKit coverage after the core product flows stabilize.
 
 ## Product/engineering observations
 
-- The prototype proves the main family interaction, but its present authentication and authorization are development-only.
-- Authentication now uses bcrypt password hashes and a signed, expiring HttpOnly cookie. Browser storage no longer acts as session authority, and account DTOs cannot contain password material.
-- The production-reachable transaction cleanup route was removed; Mongo integration setup now owns fixture cleanup directly.
+- The prototype proves the main family interaction, but account recovery, rate limiting, CSRF policy, and production operations still need explicit designs before public launch.
+- Authentication uses bcrypt password hashes and a signed, expiring HttpOnly cookie. Browser storage no longer acts as session authority, and account DTOs cannot contain password material.
+- Data-bearing routes enforce guardian-family or child-self authorization on the server. Client-supplied IDs and transaction status fields are not treated as authority.
+- Generic transaction deletion is disabled; Mongo integration setup owns fixture cleanup directly.
 - The mock-client seam is valuable and should remain, ideally behind application-level ports rather than browser transport details.
 - Parent adjustment, request approval, and interest accrual need one consistent transaction-ledger policy.
 - Responsive web/PWA is the cheapest way to validate the child experience before committing to a separate native app.
