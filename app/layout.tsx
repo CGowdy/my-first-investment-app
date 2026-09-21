@@ -8,7 +8,18 @@ import {ClientProvider} from "./context/ClientContext";
 import {SpeedInsights} from "@vercel/speed-insights/next";
 import {Analytics} from "@vercel/analytics/react";
 
-/* eslint-disable @next/next/no-page-custom-font -- Material Symbols is a stylesheet, not a text font. */
+const themeBootstrapScript = `
+(() => {
+  let theme = 'light';
+  try {
+    const savedTheme = localStorage.getItem('color-theme');
+    theme = savedTheme === 'light' || savedTheme === 'dark'
+      ? savedTheme
+      : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {}
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.documentElement.style.colorScheme = theme;
+})();`;
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -19,10 +30,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: { children: React.ReactNode }) {
 	return (
-		<>
-			<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
-				<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=optional" rel="stylesheet" />
+				<script dangerouslySetInnerHTML={{__html: themeBootstrapScript}}/>
 			</head>
 			<body className={`${inter.className}`}>
 			<SpeedInsights/>
@@ -36,7 +46,6 @@ export default function RootLayout({children}: { children: React.ReactNode }) {
 				</AuthProvider>
 			</ClientProvider>
 			</body>
-			</html>
-		</>
+		</html>
 	);
 }

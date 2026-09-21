@@ -73,13 +73,13 @@ export function ChildPreview({child}: ChildPreviewProps) {
     }
 
     return (
-        <div data-testid={`child-preview-${child._id}`} className={`shadow-lg  rounded-lg text-black  pl-2 pr-0 pb-0 relative  ${pendingRequests.length === 0 ? 'ring-1 bg-gray-200 ring-emerald-700' : 'bg-gray-200 ring-blue-700 ring-2'} z-10`}>
+        <div data-testid={`child-preview-${child._id}`} className={`relative z-10 rounded-lg pl-2 pr-0 pb-0 text-slate-900 shadow-lg dark:text-slate-100 ${pendingRequests.length === 0 ? 'bg-gray-200 ring-1 ring-emerald-700 dark:bg-slate-800' : 'bg-gray-200 ring-2 ring-blue-700 dark:bg-slate-800'}`}>
             {/*<Button buttonText="Delete" className={'ml-4'} onButtonPressed={() => onDeletePressed(child.id)}/> to be implemented in issue #12*/}
 
             {loadingRequests && <div>Loading requests...</div>}
 
             {loading &&
-                <div className="absolute top-0 left-0 h-full w-full bg-white bg-opacity-40 z-10 flex items-center justify-center">
+                <div className="absolute top-0 left-0 z-10 flex h-full w-full items-center justify-center bg-white/40 dark:bg-slate-950/60">
                     <div className="flex items-center">
                         <span className="text-3xl mr-4">Loading</span>
                         <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -105,11 +105,10 @@ export function ChildPreview({child}: ChildPreviewProps) {
                                      type="button"
                                      aria-expanded={showRequests}
                                      aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? 's' : ''}`}
-                                     className={'flex items-center text-sm w-full h-full font-bold rounded-none rounded-tr-lg bg-transparent text-gray-900 cursor-pointer user-select:none'}
+                                     className={'flex h-full w-full cursor-pointer items-center rounded-none rounded-tr-lg bg-transparent text-sm font-bold text-gray-900 dark:text-slate-100'}
                                      onClick={() => setShowRequests(!showRequests)}>
                                     <span className={'mr-1'}>{pendingRequests.length} request{pendingRequests.length > 1 ? 's' : ''}</span>
-                                    {!showRequests && (<span aria-hidden="true" className={"material-symbols-outlined"}>stat_1</span>)}
-                                    {showRequests && (<span aria-hidden="true" className={"material-symbols-outlined"}>stat_minus_1</span>)}
+                                    <span aria-hidden="true">{showRequests ? '▲' : '▼'}</span>
                                 </button>}
 
                         </div>

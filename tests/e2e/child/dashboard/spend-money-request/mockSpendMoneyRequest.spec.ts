@@ -9,7 +9,19 @@ test.describe('Mock Spend Money Request', ()=>{
     });
 
     test('should have Spend Money Request area', async ({page}) => {
-        await expect(page.getByText('Spend Money RequestI want to')).toBeVisible();
+        await expect(page.getByRole('heading', {name: 'Spend Money Request'})).toBeVisible();
+        await expect(page.getByLabel('I want to spend', {exact: true})).toBeVisible();
+    });
+
+    test('should give the amount field the available card width', async ({page}) => {
+        const amountField = page.getByLabel('I want to spend', {exact: true});
+        const reasonField = page.getByLabel('I want to spend this money because');
+        const amountBox = await amountField.boundingBox();
+        const reasonBox = await reasonField.boundingBox();
+
+        expect(amountBox).not.toBeNull();
+        expect(reasonBox).not.toBeNull();
+        expect(amountBox!.width).toBeGreaterThan(reasonBox!.width * 0.9);
     });
 
     test('should update the account balance when a money request is made', async ({page}) => {

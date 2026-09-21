@@ -75,14 +75,14 @@ export default function ChildDashboard() {
     }
 
     return (
-        <div className={'flex-col'}>
+        <div className={'w-full flex-col'}>
             {!childAccount && <div>Loading...</div>}
             {childAccount && childAccount.balance &&
                 <div>
                 <h1>Hello {childAccount.displayName}</h1>
                 <br/>
-                <div className="prose bg-white px-4 py-5 sm:px-6 text-black rounded-2xl mb-2 text-lg font-bold max-w-none">
-                    <h2 className={'border-b border-gray-200 font-semibold leading-6 text-gray-900 pb-2'}>Account Balance</h2>
+                <div className="prose mb-2 max-w-none rounded-2xl bg-white px-4 py-5 text-lg font-bold text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6">
+                    <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Account Balance</h2>
                     {pendingRequests?.length > 0
                         ? <div>
                             <div>Your current balance is</div>
@@ -96,8 +96,8 @@ export default function ChildDashboard() {
                     <div className={'mt-4'}>Today your money made you</div>
                     <div>${dailyEarnings.toFixed(2)} </div>
                 </div>
-                <div className={'prose bg-white px-4 py-5 sm:px-6 text-black rounded-2xl flex flex-col mb-2 max-w-none'}>
-                    <h2 className={'border-b border-gray-200 font-semibold leading-6 text-gray-900 pb-2'}>Pretend Zone</h2>
+                <div className={'prose mb-2 flex max-w-none flex-col rounded-2xl bg-white px-4 py-5 text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6'}>
+                    <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Pretend Zone</h2>
                     <p className={'text-sm'}>This area can be used to pretend you spent some of your money or put more money in.</p>
                     <div className={'flex flex-col lg:flex-row'}>
                         <div className={"w-full mb-4"}>
@@ -124,10 +124,10 @@ export default function ChildDashboard() {
                         </div>
                     </div>
                 </div>
-                <div className={'prose bg-white px-4 py-5 sm:px-6 text-black rounded-2xl flex flex-col max-w-none'}>
-                    <h2 className={'border-b border-gray-200 font-semibold leading-6 text-gray-900 pb-2'}>Spend Money Request</h2>
-                    <div className={'flex-col'}>
-                        <LabelledInput name='i-want-to-spend' className={"w-15 mx-1"} label={"I want to spend"} inputText={requestAmount.toString()} onInputChanged={setRequestAmount}
+                <div className={'prose flex max-w-none flex-col rounded-2xl bg-white px-4 py-5 text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6'}>
+                    <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Spend Money Request</h2>
+                    <div className={'flex w-full flex-col'}>
+                        <LabelledInput name='i-want-to-spend' className={"mx-1 w-auto"} label={"I want to spend"} inputText={requestAmount.toString()} onInputChanged={setRequestAmount}
                                        headerDisplay={"$"} placeholder={"Enter amount"}/>
                         <LabelledInput name='i-want-to-spend-this-money-because' className={"mx-1 mb-2"} label={"I want to spend this money because"} inputText={requestReason}
                                        onInputChanged={setRequestReason}

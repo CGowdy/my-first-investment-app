@@ -18,4 +18,8 @@ test.describe('Mock Dashboard', ()=>{
     test('should show any child accounts after successful login', async ({page}) => {
         await expect(page.getByText('Child 1')).toBeVisible();
     });
+    test('should not show prototype formatting samples', async ({page}) => {
+        await expect(page.getByText('This is a test')).toHaveCount(0);
+        await expect(page.getByText('THIS IS BOLD')).toHaveCount(0);
+    });
 });

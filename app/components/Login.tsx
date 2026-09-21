@@ -32,9 +32,9 @@ export default function Login() {
 	};
 
 	return (
-		<div className={"rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm"}>
+		<div className={"rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"}>
 			<h2 className="mb-1 text-2xl font-semibold">{creatingAccount ? "Create a guardian account" : "Sign in"}</h2>
-			<p className="mb-5 text-sm text-slate-600">
+			<p className="mb-5 text-sm text-slate-600 dark:text-slate-300">
 				{creatingAccount ? "Guardian accounts can create and manage child profiles." : "Use your guardian or child username."}
 			</p>
 			{creatingAccount ? <div className={"mb-3 flex-col"}>
@@ -81,7 +81,7 @@ export default function Login() {
 						if (event.key === 'Enter') void register();
 					}}
 				/>
-				<p className="mt-1 text-xs text-slate-500">Any non-empty password works during prototype testing.</p>
+				<p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Any non-empty password works during prototype testing.</p>
 			</div> : null}
 			{error ? <div role="alert" className={"text-sm font-medium text-red-700"}>{error}</div>:null}
 			<div className="mt-4 flex flex-wrap items-center gap-3">

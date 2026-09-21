@@ -6,6 +6,7 @@ Last reviewed: 2026-09-21
 
 - Next.js 16, React 19, TypeScript, and Tailwind CSS 4 prototype.
 - Parent and child login/dashboard paths.
+- Persistent light and dark themes across the home, authentication, and dashboard screens.
 - Self-service guardian registration; guardians create child access within their family.
 - Parent creation of child accounts and balance adjustments.
 - Child purchase requests with parent approval or denial.
@@ -24,7 +25,7 @@ Last reviewed: 2026-09-21
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
 | `npm run test:unit` | Passing | 27 suites and 114 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
-| `npm run test:e2e` | Passing | 26 mock-backed Chromium tests pass using a Playwright-managed local server. |
+| `npm run test:e2e` | Passing | 29 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
 | Mongo Playwright integration | Passing | 25 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs and usernames. |
 
