@@ -6,6 +6,8 @@ import type {ClientSession} from "mongodb";
 import {findById, findMany, updateOne, updateOneById, withMongoTransaction} from "../../../mongoDataAPIHelper";
 import {readSession} from "../../../../server/auth/session";
 import {POST} from "./route";
+import {createGrowthAccrual} from "../../../../domain/growth-accrual";
+import {persistChildGrowth} from "../../../../server/growth/settle-child-growth";
 
 jest.mock("../../../mongoDataAPIHelper", () => ({
     Collection: {Transactions: "transactions", ChildAccounts: "childaccounts"},
@@ -17,6 +19,8 @@ jest.mock("../../../mongoDataAPIHelper", () => ({
 }));
 
 jest.mock("../../../../server/auth/session", () => ({readSession: jest.fn()}));
+jest.mock("../../../../domain/growth-accrual", () => ({createGrowthAccrual: jest.fn()}));
+jest.mock("../../../../server/growth/settle-child-growth", () => ({persistChildGrowth: jest.fn()}));
 
 const mockedReadSession = jest.mocked(readSession);
 const mockedFindById = jest.mocked(findById);
@@ -24,6 +28,8 @@ const mockedFindMany = jest.mocked(findMany);
 const mockedUpdateOne = jest.mocked(updateOne);
 const mockedUpdateOneById = jest.mocked(updateOneById);
 const mockedWithMongoTransaction = jest.mocked(withMongoTransaction);
+const mockedCreateGrowthAccrual = jest.mocked(createGrowthAccrual);
+const mockedPersistChildGrowth = jest.mocked(persistChildGrowth);
 const databaseSession = {} as ClientSession;
 
 const transactionId = "507f1f77bcf86cd799439012";
@@ -56,6 +62,8 @@ describe("request approval authorization and transitions", () => {
         mockedFindMany.mockResolvedValue({documents: []});
         mockedUpdateOne.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
         mockedUpdateOneById.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
+        mockedCreateGrowthAccrual.mockImplementation(account => ({accrued: false, elapsedDays: 0, account}));
+        mockedPersistChildGrowth.mockImplementation(async account => account);
         mockedWithMongoTransaction.mockImplementation(operation => operation(databaseSession));
     });
 
@@ -79,6 +87,7 @@ describe("request approval authorization and transitions", () => {
 
         expect(response.status).toBe(409);
         expect(mockedUpdateOne).not.toHaveBeenCalled();
+        expect(mockedPersistChildGrowth).not.toHaveBeenCalled();
     });
 
     it("conditionally transitions an owned pending request", async () => {
@@ -117,6 +126,7 @@ describe("request approval authorization and transitions", () => {
         expect(response.status).toBe(409);
         expect(mockedUpdateOne).not.toHaveBeenCalled();
         expect(mockedUpdateOneById).not.toHaveBeenCalled();
+        expect(mockedPersistChildGrowth).not.toHaveBeenCalled();
     });
 
     it("does not update the balance when a concurrent request wins the transition", async () => {
@@ -129,5 +139,6 @@ describe("request approval authorization and transitions", () => {
 
         expect(response.status).toBe(409);
         expect(mockedUpdateOneById).not.toHaveBeenCalled();
+        expect(mockedPersistChildGrowth).not.toHaveBeenCalled();
     });
 });

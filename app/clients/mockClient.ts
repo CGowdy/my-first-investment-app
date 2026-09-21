@@ -9,6 +9,7 @@ import {compare, hash} from "bcryptjs";
 import {approvePurchaseRequest} from "../domain/purchase-request";
 import {createBalanceAdjustment} from "../domain/balance-adjustment";
 import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
+import {createGrowthAccrual, type GrowthAccrualDecision} from "../domain/growth-accrual";
 
 
 type MockUser = IUser & {passwordHash: string};
@@ -27,6 +28,17 @@ export const mockUsers: MockUser[] = [
 
 export const mockRequests: Transaction[] = []
 
+function settleMockChildGrowth(child: ChildAccount, asOf: Date, checkpointIfZero = false): ChildAccount {
+    const decision = createGrowthAccrual(child, asOf, {checkpointIfZero});
+    return applyMockGrowthDecision(child, decision);
+}
+
+function applyMockGrowthDecision(child: ChildAccount, decision: GrowthAccrualDecision): ChildAccount {
+    if (decision.account !== child) Object.assign(child, decision.account);
+    if (decision.transaction) mockRequests.push({...decision.transaction, _id: guid()});
+    return child;
+}
+
 export default class MockClient implements IClient {
     private session: AuthenticatedAccount | null = null;
 
@@ -34,6 +46,7 @@ export default class MockClient implements IClient {
         const user = mockUsers.find(user => user.username === userData.username);
         if (!user || !await compare(userData.password, user.passwordHash)) return null;
         const child = mockChildren.find(child => child.username === userData.username);
+        if (child) settleMockChildGrowth(child, new Date());
         const authenticated = {...user, ...child};
         const {passwordHash: _passwordHash, ...safeAccount} = authenticated;
         this.session = safeAccount;
@@ -41,6 +54,10 @@ export default class MockClient implements IClient {
     }
 
     getSession(): Promise<AuthenticatedAccount | null> {
+        if (this.session?.isChildAccount && this.session._id) {
+            const child = mockChildren.find(candidate => candidate._id === this.session?._id);
+            if (child) this.session = {...this.session, ...settleMockChildGrowth(child, new Date())};
+        }
         return Promise.resolve(this.session);
     }
 
@@ -75,7 +92,9 @@ export default class MockClient implements IClient {
     }
 
     getChildAccounts(parentId: string): Promise<ChildAccount[]|null> {
-        return Promise.resolve(mockChildren.filter(child => child.parentId === parentId));
+        return Promise.resolve(mockChildren
+            .filter(child => child.parentId === parentId)
+            .map(child => settleMockChildGrowth(child, new Date())));
     }
 
     deleteChildAccount(childId: string): Promise<void> {
@@ -133,11 +152,14 @@ export default class MockClient implements IClient {
                 reject(new Error('Request not found'));
                 return;
             }
-            const decision = approvePurchaseRequest(transactionToApprove, child, this.session._id, new Date());
+            const approvedAt = new Date();
+            const growth = createGrowthAccrual(child, approvedAt, {checkpointIfZero: true});
+            const decision = approvePurchaseRequest(transactionToApprove, growth.account, this.session._id, approvedAt);
             if (!decision.ok) {
                 reject(new Error(decision.reason));
                 return;
             }
+            applyMockGrowthDecision(child, growth);
             Object.assign(transactionToApprove, decision.transaction);
             child.balance = decision.balance;
             //Return the updated mockRequests array
@@ -165,7 +187,7 @@ export default class MockClient implements IClient {
     getChildAccount(childUserId: string): Promise<ChildAccount> {
         return new Promise((resolve, reject) => {
             const child = mockChildren.find(child => child._id === childUserId);
-            if (child) resolve(child);
+            if (child) resolve(settleMockChildGrowth(child, new Date()));
             else reject(new Error(`Child with id ${childUserId} not found`));
         });
     }
@@ -178,13 +200,16 @@ export default class MockClient implements IClient {
                 reject(new Error(`Child with id ${childUserId} not found`));
                 return;
             }
-            const decision = createBalanceAdjustment(child, childUserId, adjustment, this.session._id, new Date());
+            const recordedAt = new Date();
+            const growth = createGrowthAccrual(child, recordedAt, {checkpointIfZero: true});
+            const decision = createBalanceAdjustment(growth.account, childUserId, adjustment, this.session._id, recordedAt);
             if (!decision.ok) {
                 reject(new Error(decision.reason === "INSUFFICIENT_BALANCE"
                     ? "Adjustment cannot make the balance negative"
                     : "Adjustment must be a non-zero finite number"));
                 return;
             }
+            applyMockGrowthDecision(child, growth);
             mockRequests.push({...decision.transaction, _id: guid()});
             child.balance = decision.balance;
             resolve(child);

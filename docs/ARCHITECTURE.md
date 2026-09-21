@@ -18,7 +18,9 @@ ClientContext -> IClient
 
 `AuthContext` restores a server-issued, signed HttpOnly session into React state through the selected data client. The dashboard selects a child or parent view from `isChildAccount`. `IClient` provides a replaceable browser-side data facade, which is useful for deterministic tests, but currently mixes transport concerns with application operations.
 
-The data model centers on users, child accounts, and transactions. Usernames are protected by the unique `users_username_unique` database index. Balances are also stored directly on child accounts, while transactions provide a partial history. Interest is calculated during child login.
+The data model centers on users, child accounts, and transactions. Usernames are protected by the unique `users_username_unique` database index. Balances are also stored directly on child accounts, while transactions provide a partial history. Simulated growth is settled lazily during authenticated account reads and before balance mutations.
+
+Lazy growth settlement uses no scheduler or background invocation. A request that already needs an account calculates completed 24-hour UTC periods since `balanceLastUpdated`; if at least one cent is due, the app writes one explanatory growth transaction and the resulting balance atomically. Multiple inactive days collapse into one entry, while partial days remain pending. Principal-changing commands checkpoint at the mutation time so a new principal is never applied retroactively.
 
 ## Current boundaries
 
@@ -35,12 +37,11 @@ The data model centers on users, child accounts, and transactions. Usernames are
 
 ## Main architectural risks
 
-1. Login-time interest still uses separate writes; child provisioning, request approval, and parent adjustments now use MongoDB transactions for their related records.
-2. Several API boundaries still need a shared validation and error-response contract.
-3. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
-4. Business behavior is spread across components, clients, route handlers, and login side effects.
-5. Floating-point currency and time-dependent interest calculations can produce surprising results.
-6. A future mobile app would have to depend on unstable, web-shaped endpoints unless an explicit API contract is established.
+1. Several API boundaries still need a shared validation and error-response contract.
+2. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
+3. Some business behavior remains spread across components, clients, and route handlers instead of application services.
+4. Floating-point currency remains a risk even though growth calculations now use injected UTC timestamps and round credited amounts to cents.
+5. A future mobile app would have to depend on unstable, web-shaped endpoints unless an explicit API contract is established.
 
 ## Target direction
 

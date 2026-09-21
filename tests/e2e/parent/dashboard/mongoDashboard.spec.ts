@@ -18,4 +18,8 @@ test.describe('Mongo Dashboard', ()=>{
     test('should show any child accounts after successful login', async ({page}) => {
         await expect(page.getByText('First Mongo Child')).toBeVisible();
     });
+    test('should lazily settle elapsed simulated growth', async ({page}) => {
+        await expect(page.getByText('Growth Child')).toBeVisible();
+        await expect(page.getByTestId('child-balance-65ada4aaf492160c4272914c')).toHaveText('1004.12');
+    });
 });

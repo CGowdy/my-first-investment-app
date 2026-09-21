@@ -1,7 +1,8 @@
 import {ChildAccount} from "@models/child-account";
-import {Collection, findById} from "@mongoDataApiHelper";
+import {Collection, findById, withMongoTransaction} from "@mongoDataApiHelper";
 import {canAccessChild} from "../../../server/auth/authorization";
 import {readSession} from "../../../server/auth/session";
+import {settleChildGrowth} from "../../../server/growth/settle-child-growth";
 
 function authenticationRequired(): Response {
     return Response.json({error: {code: "UNAUTHENTICATED", message: "Authentication required"}}, {status: 401});
@@ -17,13 +18,16 @@ export const GET = async (_req: Request, {params}: {params: Promise<{id: string}
         if (!session) return authenticationRequired();
 
         const {id} = await params;
-        const childAccount = (await findById<ChildAccount>(Collection.ChildAccounts, id))?.document;
-        if (!childAccount) {
+        const result = await withMongoTransaction(async databaseSession => {
+            const childAccount = (await findById<ChildAccount>(Collection.ChildAccounts, id, databaseSession))?.document;
+            if (!childAccount || !canAccessChild(session, childAccount)) return null;
+            return settleChildGrowth(childAccount, new Date(), databaseSession);
+        });
+        if (!result) {
             return childNotFound();
         }
-        if (!canAccessChild(session, childAccount)) return childNotFound();
 
-        return Response.json(childAccount);
+        return Response.json(result);
     } catch {
         return Response.json({error: {code: "SERVER_ERROR", message: "Unable to load child account"}}, {status: 500});
     }

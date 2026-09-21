@@ -2,8 +2,10 @@ import {Collection, findById, insertOne, updateOneById, withMongoTransaction} fr
 import {ChildAccount} from "@models/child-account";
 import {Transaction} from "@models/transaction";
 import {createBalanceAdjustment} from "../../../../domain/balance-adjustment";
+import {createGrowthAccrual} from "../../../../domain/growth-accrual";
 import {canManageChild} from "../../../../server/auth/authorization";
 import {readSession} from "../../../../server/auth/session";
+import {persistChildGrowth} from "../../../../server/growth/settle-child-growth";
 
 export async function POST(req: Request, {params}: {params: Promise<{id: string}>}) {
     try {
@@ -22,8 +24,11 @@ export async function POST(req: Request, {params}: {params: Promise<{id: string}
             const child = (await findById<ChildAccount>(Collection.ChildAccounts, id, databaseSession))?.document;
             if (!child?._id || !canManageChild(session, child)) return {error: "NOT_FOUND" as const};
 
-            const decision = createBalanceAdjustment(child, id, body.amount as number, session.userId, new Date());
+            const recordedAt = new Date();
+            const growth = createGrowthAccrual(child, recordedAt, {checkpointIfZero: true});
+            const decision = createBalanceAdjustment(growth.account, id, body.amount as number, session.userId, recordedAt);
             if (!decision.ok) return {error: decision.reason};
+            const settledChild = await persistChildGrowth(child, growth, databaseSession);
 
             const transactionResult = await insertOne<Transaction>(
                 Collection.Transactions,
@@ -40,7 +45,7 @@ export async function POST(req: Request, {params}: {params: Promise<{id: string}
             );
             if (!accountResult?.matchedCount) throw new Error("Failed to update child account");
 
-            return {child: {...child, balance: decision.balance}};
+            return {child: {...settledChild, balance: decision.balance}};
         });
 
         if ("error" in result) {

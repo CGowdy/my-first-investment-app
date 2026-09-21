@@ -1,13 +1,12 @@
 import dotenv from "dotenv";
-import {Collection, findById, findOne, insertOne, updateOneById} from "@mongoDataApiHelper";
+import {Collection, findById, findOne, withMongoTransaction} from "@mongoDataApiHelper";
 import {ChildAccount} from "@models/child-account";
-import {getAccruedInterest} from "@models/balance";
-import {ApprovalStatus, Transaction} from "@models/transaction";
 import type {ApiError} from "@models/auth";
 import {parseLoginData, toAuthenticatedChildAccount, toAuthenticatedUser} from "./security";
 import {verifyPassword} from "../../server/auth/password";
 import {createSession, deleteSession, readSession} from "../../server/auth/session";
 import type {StoredUser} from "../../server/auth/types";
+import {settleChildGrowth} from "../../server/growth/settle-child-growth";
 
 dotenv.config();
 
@@ -38,64 +37,30 @@ export const POST = async (req: Request) => {
             return authenticationError(401, "INVALID_CREDENTIALS", "Invalid username or password");
         }
         if (!foundUser._id) throw new Error('User does not have an id');
-        const childAccountResponse = await findOne<ChildAccount>(Collection.ChildAccounts,{_id: {$oid: foundUser._id}});
-        const childAccount = childAccountResponse?.document;
-
-        if(!childAccount){
-            //Not child account therefore this is a parent account
-            //Return the parent account
+        if (!foundUser.isChildAccount) {
             await createSession({
                 userId: foundUser._id,
                 familyId: foundUser._id,
                 role: "guardian",
             });
             return Response.json(toAuthenticatedUser(foundUser));
-        }else{
-            //Update child balance for the child account
-            //Check if the latestBalance.date is today
-            const today = new Date();
-            const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            if(new Date(childAccount.balanceLastUpdated) < startOfToday){
-                //Create Interest transaction
-                const interest = await getAccruedInterest(childAccount.balance, childAccount.interest/100, childAccount.balanceLastUpdated);
-
-                //TODO: This is something but brain is not working so patooey
-                if(!childAccount._id) throw new Error('Child account does not have an id');
-                const accrudeInterestTransaction:Transaction = {
-                    date: today,
-                    amount: interest,
-                    childId: childAccount._id,
-                    reason: 'Interest',
-                    approved: ApprovalStatus.AdminApproved
-                };
-
-                //Insert the interest transaction
-                const insertResult = await insertOne<Transaction>(Collection.Transactions,accrudeInterestTransaction);
-                if(!insertResult || !insertResult.insertedId) throw new Error('Failed to update balance');
-
-                //Update the child account balance
-                const updatedAccount : ChildAccount = {...childAccount, balance: childAccount.balance + interest, balanceLastUpdated: today};
-                const updateResult = await updateOneById<ChildAccount>(Collection.ChildAccounts,childAccount._id, {
-                    balance: updatedAccount.balance,
-                    balanceLastUpdated: today
-                });
-                if(!updateResult) throw new Error('Failed to update account');
-                await createSession({
-                    userId: foundUser._id,
-                    familyId: childAccount.parentId,
-                    role: "child",
-                });
-                //Return the child account
-                return Response.json(toAuthenticatedChildAccount(updatedAccount));
-            }
-
-            await createSession({
-                userId: foundUser._id,
-                familyId: childAccount.parentId,
-                role: "child",
-            });
-            return Response.json(toAuthenticatedChildAccount(childAccount));
         }
+
+        const childAccount = await withMongoTransaction(async databaseSession => {
+            const child = (await findOne<ChildAccount>(
+                Collection.ChildAccounts,
+                {_id: {$oid: foundUser._id}},
+                databaseSession,
+            ))?.document;
+            if (!child) throw new Error("Child profile is missing");
+            return settleChildGrowth(child, new Date(), databaseSession);
+        });
+        await createSession({
+            userId: foundUser._id,
+            familyId: childAccount.parentId,
+            role: "child",
+        });
+        return Response.json(toAuthenticatedChildAccount(childAccount));
 
     } catch (error) {
         console.error("Authentication request failed");
@@ -118,12 +83,19 @@ export const GET = async () => {
         }
 
         if (session.role === "child") {
-            const childResult = await findById<ChildAccount>(Collection.ChildAccounts, session.userId);
-            if (!childResult?.document) {
+            const child = await withMongoTransaction(async databaseSession => {
+                const account = (await findById<ChildAccount>(
+                    Collection.ChildAccounts,
+                    session.userId,
+                    databaseSession,
+                ))?.document;
+                return account ? settleChildGrowth(account, new Date(), databaseSession) : null;
+            });
+            if (!child) {
                 await deleteSession();
                 return authenticationError(401, "UNAUTHENTICATED", "Authentication required");
             }
-            return Response.json(toAuthenticatedChildAccount(childResult.document));
+            return Response.json(toAuthenticatedChildAccount(child));
         }
 
         return Response.json(toAuthenticatedUser(user));

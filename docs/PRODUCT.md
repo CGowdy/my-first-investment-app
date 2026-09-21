@@ -62,7 +62,13 @@ A family can create guardian and child access, record simulated funds, see a tru
 
 - Whether balances represent a parent's real-world promise, purely fictional points, or a family-selectable mode.
 - Which buckets are built in and whether children may create their own goals.
-- Whether growth is simple interest, compound interest, parent-defined rewards, or multiple named simulations.
 - Appropriate child sign-in by age: PIN, passkey/device link, guardian-assisted access, or another low-data method.
 - Whether purchases reduce the balance at approval, fulfillment, or a separate completion step.
 - Whether multiple guardians and multiple families per guardian are required for MVP.
+
+## Simulated growth rule for the MVP
+
+- A guardian chooses one annual percentage rate for each child account.
+- Growth compounds once per completed 24-hour UTC period and is rounded to cents when credited.
+- The app settles all elapsed days in one entry when the account is next viewed or before its balance changes. It does not run scheduled or background jobs for inactive accounts.
+- Growth is educational and simulated. The interface must not present it as a guaranteed real-world return.

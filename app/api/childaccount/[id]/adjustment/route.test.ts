@@ -5,6 +5,8 @@ import type {ChildAccount} from "@models/child-account";
 import {ApprovalStatus} from "@models/transaction";
 import {findById, insertOne, updateOneById, withMongoTransaction} from "../../../mongoDataAPIHelper";
 import {readSession} from "../../../../server/auth/session";
+import {createGrowthAccrual} from "../../../../domain/growth-accrual";
+import {persistChildGrowth} from "../../../../server/growth/settle-child-growth";
 import {POST} from "./route";
 
 jest.mock("../../../mongoDataAPIHelper", () => ({
@@ -15,12 +17,16 @@ jest.mock("../../../mongoDataAPIHelper", () => ({
     withMongoTransaction: jest.fn(),
 }));
 jest.mock("../../../../server/auth/session", () => ({readSession: jest.fn()}));
+jest.mock("../../../../domain/growth-accrual", () => ({createGrowthAccrual: jest.fn()}));
+jest.mock("../../../../server/growth/settle-child-growth", () => ({persistChildGrowth: jest.fn()}));
 
 const mockedReadSession = jest.mocked(readSession);
 const mockedFindById = jest.mocked(findById);
 const mockedInsertOne = jest.mocked(insertOne);
 const mockedUpdateOneById = jest.mocked(updateOneById);
 const mockedWithMongoTransaction = jest.mocked(withMongoTransaction);
+const mockedCreateGrowthAccrual = jest.mocked(createGrowthAccrual);
+const mockedPersistChildGrowth = jest.mocked(persistChildGrowth);
 const databaseSession = {} as ClientSession;
 const childId = "507f1f77bcf86cd799439011";
 const familyId = "guardian-1";
@@ -49,6 +55,8 @@ describe("balance adjustment route", () => {
         mockedFindById.mockResolvedValue({document: child});
         mockedInsertOne.mockResolvedValue({insertedId: "transaction-1"});
         mockedUpdateOneById.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
+        mockedCreateGrowthAccrual.mockReturnValue({accrued: false, elapsedDays: 0, account: child});
+        mockedPersistChildGrowth.mockResolvedValue(child);
         mockedWithMongoTransaction.mockImplementation(operation => operation(databaseSession));
     });
 
@@ -66,6 +74,12 @@ describe("balance adjustment route", () => {
             date: expect.any(Date),
             actorId: familyId,
         }, databaseSession);
+        expect(mockedCreateGrowthAccrual).toHaveBeenCalledWith(child, expect.any(Date), {checkpointIfZero: true});
+        expect(mockedPersistChildGrowth).toHaveBeenCalledWith(
+            child,
+            {accrued: false, elapsedDays: 0, account: child},
+            databaseSession,
+        );
         expect(mockedUpdateOneById).toHaveBeenCalledWith(
             "childaccounts",
             childId,
@@ -90,5 +104,6 @@ describe("balance adjustment route", () => {
         expect(response.status).toBe(400);
         expect(mockedInsertOne).not.toHaveBeenCalled();
         expect(mockedUpdateOneById).not.toHaveBeenCalled();
+        expect(mockedPersistChildGrowth).not.toHaveBeenCalled();
     });
 });

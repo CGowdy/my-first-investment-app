@@ -4,6 +4,8 @@ import {ApprovalStatus, Transaction} from "@models/transaction";
 import {canManageChild} from "../../../../server/auth/authorization";
 import {readSession} from "../../../../server/auth/session";
 import {approvePurchaseRequest} from "../../../../domain/purchase-request";
+import {createGrowthAccrual} from "../../../../domain/growth-accrual";
+import {persistChildGrowth} from "../../../../server/growth/settle-child-growth";
 
 export async function POST(_req: Request, {params}: {params: Promise<{id: string}>}) {
     try {
@@ -16,7 +18,9 @@ export async function POST(_req: Request, {params}: {params: Promise<{id: string
             if (!transaction) return {error: "NOT_FOUND" as const};
             const child = (await findById<ChildAccount>(Collection.ChildAccounts, transaction.childId, databaseSession))?.document;
             if (!child || !canManageChild(session, child)) return {error: "NOT_FOUND" as const};
-            const decision = approvePurchaseRequest(transaction, child, session.userId, new Date());
+            const approvedAt = new Date();
+            const growth = createGrowthAccrual(child, approvedAt, {checkpointIfZero: true});
+            const decision = approvePurchaseRequest(transaction, growth.account, session.userId, approvedAt);
             if (!decision.ok) return {error: decision.reason};
 
             const transactionUpdate = await updateOne<Transaction>(Collection.Transactions, {
@@ -31,6 +35,7 @@ export async function POST(_req: Request, {params}: {params: Promise<{id: string
             }, databaseSession);
             if (!transactionUpdate?.matchedCount) return {error: "INVALID_TRANSITION" as const};
 
+            await persistChildGrowth(child, growth, databaseSession);
             const accountUpdate = await updateOneById<ChildAccount>(
                 Collection.ChildAccounts,
                 child._id!,

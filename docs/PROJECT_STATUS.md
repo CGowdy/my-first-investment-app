@@ -8,7 +8,7 @@ Last reviewed: 2026-09-21
 - Parent and child login/dashboard paths.
 - Parent creation of child accounts and balance adjustments.
 - Child purchase requests with parent approval or denial.
-- Simulated daily compound-interest calculation.
+- Lazy simulated daily compound-growth settlement with no scheduler or background jobs.
 - Swappable mock and MongoDB-backed clients. Server routes use the MongoDB Node.js driver; the retired Atlas Data API is no longer required.
 - Jest component/model tests and Playwright browser flows.
 - Vercel-oriented pull-request Playwright workflow and a Jest workflow.
@@ -21,11 +21,11 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 21 suites and 83 deterministic tests pass. |
+| `npm run test:unit` | Passing | 24 suites and 98 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
 | `npm run test:e2e` | Passing | 25 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
-| Mongo Playwright integration | Passing | 23 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs. |
+| Mongo Playwright integration | Passing | 24 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs. |
 
 ## MongoDB Atlas status
 
@@ -51,6 +51,7 @@ Last reviewed: 2026-09-21
 - Purchase-request approval uses one shared domain decision for mock and Mongo paths, records the approving guardian and time, conditionally transitions a pending request, and updates its before/after ledger values and child balance in one MongoDB transaction. The browser no longer receives a generic balance-overwrite operation.
 - Parent balance adjustments use one shared domain decision for mock and Mongo paths and atomically write the audited ledger entry with the resulting child balance. The API now identifies the adjusted child explicitly in its route.
 - Child provisioning rejects duplicate usernames and atomically creates the child profile, login identity, and audited opening-balance entry.
+- Simulated growth is calculated only on existing authenticated reads or immediately before a balance mutation. Completed 24-hour UTC periods are compounded into one atomic ledger entry, so inactive accounts produce no serverless invocations.
 - The mock-client seam is valuable and should remain, ideally behind application-level ports rather than browser transport details.
-- Parent adjustment, request approval, and interest accrual need one consistent transaction-ledger policy.
+- Parent adjustments, request approvals, and simulated growth now share the same atomic transaction-ledger policy.
 - Responsive web/PWA is the cheapest way to validate the child experience before committing to a separate native app.

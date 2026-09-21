@@ -207,6 +207,24 @@ export async function updateOneById<T>(
     return updateOne<T>(collection, idFilter(id), update, session);
 }
 
+export async function updateOneByIdOrThrow<T>(
+    collection: string,
+    id: string,
+    update: object,
+    session?: ClientSession,
+): Promise<UpdateOneResponse> {
+    const result = await (await getCollection(collection)).updateOne(
+        idFilter(id),
+        {$set: withoutImmutableId(update)},
+        {session},
+    );
+    return {
+        matchedCount: result.matchedCount,
+        modifiedCount: result.modifiedCount,
+        upsertedId: result.upsertedId?.toString(),
+    };
+}
+
 export async function insertOneOrThrow<T>(
     collection: string,
     documentData: T,

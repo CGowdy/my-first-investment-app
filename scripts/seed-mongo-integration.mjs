@@ -26,10 +26,13 @@ const parentId = new ObjectId("65ada4aaf492160c42729148");
 const firstChildId = new ObjectId("65ada4aaf492160c42729149");
 const spendChildId = new ObjectId("65ada4aaf492160c4272914a");
 const adjustmentChildId = new ObjectId("65ada4aaf492160c4272914b");
+const growthChildId = new ObjectId("65ada4aaf492160c4272914c");
 const fixtureKey = "playwright-mongo-integration";
 
 const today = new Date();
-today.setHours(12, 0, 0, 0);
+today.setUTCHours(12, 0, 0, 0);
+const growthCheckpoint = new Date(today);
+growthCheckpoint.setUTCDate(growthCheckpoint.getUTCDate() - 30);
 const passwordHash = await bcrypt.hash("pass123", 12);
 
 try {
@@ -97,6 +100,20 @@ try {
                 upsert: true,
             },
         },
+        {
+            replaceOne: {
+                filter: {_id: growthChildId.toHexString()},
+                replacement: {
+                    _id: growthChildId.toHexString(),
+                    username: "growthchild",
+                    passwordHash,
+                    displayName: "Growth Child",
+                    isChildAccount: true,
+                    fixtureKey,
+                },
+                upsert: true,
+            },
+        },
     ]);
 
     await childAccounts.bulkWrite([
@@ -151,10 +168,32 @@ try {
                 upsert: true,
             },
         },
+        {
+            replaceOne: {
+                filter: {_id: growthChildId},
+                replacement: {
+                    _id: growthChildId,
+                    username: "growthchild",
+                    displayName: "Growth Child",
+                    isChildAccount: true,
+                    parentId: parentId.toHexString(),
+                    balance: 1000,
+                    balanceLastUpdated: growthCheckpoint,
+                    interest: 5,
+                    fixtureKey,
+                },
+                upsert: true,
+            },
+        },
     ]);
 
     await transactions.deleteMany({
-        childId: {$in: [firstChildId.toHexString(), spendChildId.toHexString(), adjustmentChildId.toHexString()]},
+        childId: {$in: [
+            firstChildId.toHexString(),
+            spendChildId.toHexString(),
+            adjustmentChildId.toHexString(),
+            growthChildId.toHexString(),
+        ]},
     });
 
     console.log("MongoDB integration fixtures are ready");
