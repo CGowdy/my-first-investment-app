@@ -29,12 +29,13 @@ The data model centers on users, child accounts, and transactions. Balances are 
 | Client gateway | `app/clients` | Mock behavior or HTTP calls to route handlers |
 | HTTP API | `app/api` | Request parsing and MongoDB operations |
 | Data adapter | `app/api/mongoDataAPIHelper.ts` | Server-only MongoDB driver access and legacy response-shape compatibility |
+| Domain rules | `app/domain` | Framework-independent decisions such as request approval and resulting balance changes |
 | Domain-shaped types | `app/models` | Users, child accounts, transactions, balance calculation |
 | Browser flows | `tests/e2e` | Mock and live-Mongo Playwright scenarios |
 
 ## Main architectural risks
 
-1. Balance changes and transaction writes are separate operations, so failures or concurrent requests can make the ledger and stored balance disagree.
+1. Child creation, parent adjustments, and login-time interest still use separate writes; request approval now updates its ledger record and child balance in one MongoDB transaction.
 2. Several API boundaries still need a shared validation and error-response contract.
 3. MongoDB response shapes and ObjectId representations still leak through application code. The adapter currently preserves the retired Data API response envelope to keep this migration narrow.
 4. Business behavior is spread across components, clients, route handlers, and login side effects.

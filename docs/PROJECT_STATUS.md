@@ -21,7 +21,7 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 14 suites and 55 deterministic tests pass. |
+| `npm run test:unit` | Passing | 16 suites and 62 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
 | `npm run test:e2e` | Passing | 22 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
@@ -48,6 +48,7 @@ Last reviewed: 2026-09-21
 - Authentication uses bcrypt password hashes and a signed, expiring HttpOnly cookie. Browser storage no longer acts as session authority, and account DTOs cannot contain password material.
 - Data-bearing routes enforce guardian-family or child-self authorization on the server. Client-supplied IDs and transaction status fields are not treated as authority.
 - Generic transaction deletion is disabled; Mongo integration setup owns fixture cleanup directly.
+- Purchase-request approval uses one shared domain decision for mock and Mongo paths, records the approving guardian and time, conditionally transitions a pending request, and updates its before/after ledger values and child balance in one MongoDB transaction. The browser no longer receives a generic balance-overwrite operation.
 - The mock-client seam is valuable and should remain, ideally behind application-level ports rather than browser transport details.
 - Parent adjustment, request approval, and interest accrual need one consistent transaction-ledger policy.
 - Responsive web/PWA is the cheapest way to validate the child experience before committing to a separate native app.

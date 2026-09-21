@@ -10,6 +10,8 @@ export interface Transaction {
     childId: string;
     reason: string;
     approved: ApprovalStatus;
+    approvedBy?: string;
+    approvedAt?: Date;
 }
 
 export enum ApprovalStatus {

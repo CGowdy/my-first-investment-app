@@ -6,6 +6,7 @@ import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
 import {guid} from '../helper-functions';
 import {compare, hash} from "bcryptjs";
+import {approvePurchaseRequest} from "../domain/purchase-request";
 
 
 type MockUser = IUser & {passwordHash: string};
@@ -44,10 +45,6 @@ export default class MockClient implements IClient {
     logout(): Promise<void> {
         this.session = null;
         return Promise.resolve();
-    }
-
-    updateChildAccount(user: IUser): Promise<ChildAccount|null>{
-        return Promise.resolve(mockChildren.find(child => child._id === user._id)??null);
     }
 
     //Child CRUD
@@ -123,9 +120,23 @@ export default class MockClient implements IClient {
             //Find the transaction in the mockRequests array
             const transactionIndex = mockRequests.findIndex(request => request._id === transaction._id);
             //If it's not found, reject
-            if (transactionIndex === -1) reject(new Error(`Transaction with id ${transaction._id} not found`));
+            if (transactionIndex === -1) {
+                reject(new Error(`Transaction with id ${transaction._id} not found`));
+                return;
+            }
             const transactionToApprove = mockRequests[transactionIndex];
-            transactionToApprove.approved = ApprovalStatus.Approved;
+            const child = mockChildren.find(child => child._id === transactionToApprove.childId);
+            if (!child || !this.session?._id || this.session.isChildAccount || child.parentId !== this.session._id) {
+                reject(new Error('Request not found'));
+                return;
+            }
+            const decision = approvePurchaseRequest(transactionToApprove, child, this.session._id, new Date());
+            if (!decision.ok) {
+                reject(new Error(decision.reason));
+                return;
+            }
+            Object.assign(transactionToApprove, decision.transaction);
+            child.balance = decision.balance;
             //Return the updated mockRequests array
             const parentId = mockChildren.find(child => child._id === transaction.childId)?.parentId;
             resolve(mockRequests.filter(request => mockChildren.filter(child => child.parentId === parentId).map(child => child._id).includes(request.childId) && request.approved === ApprovalStatus.Pending));

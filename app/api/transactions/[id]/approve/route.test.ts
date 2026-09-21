@@ -2,7 +2,8 @@
 
 import {ApprovalStatus, type Transaction} from "@models/transaction";
 import type {ChildAccount} from "@models/child-account";
-import {findById, findMany, updateOne} from "../../../mongoDataAPIHelper";
+import type {ClientSession} from "mongodb";
+import {findById, findMany, updateOne, updateOneById, withMongoTransaction} from "../../../mongoDataAPIHelper";
 import {readSession} from "../../../../server/auth/session";
 import {POST} from "./route";
 
@@ -11,6 +12,8 @@ jest.mock("../../../mongoDataAPIHelper", () => ({
     findById: jest.fn(),
     findMany: jest.fn(),
     updateOne: jest.fn(),
+    updateOneById: jest.fn(),
+    withMongoTransaction: jest.fn(),
 }));
 
 jest.mock("../../../../server/auth/session", () => ({readSession: jest.fn()}));
@@ -19,6 +22,9 @@ const mockedReadSession = jest.mocked(readSession);
 const mockedFindById = jest.mocked(findById);
 const mockedFindMany = jest.mocked(findMany);
 const mockedUpdateOne = jest.mocked(updateOne);
+const mockedUpdateOneById = jest.mocked(updateOneById);
+const mockedWithMongoTransaction = jest.mocked(withMongoTransaction);
+const databaseSession = {} as ClientSession;
 
 const transactionId = "507f1f77bcf86cd799439012";
 const childId = "507f1f77bcf86cd799439011";
@@ -49,6 +55,8 @@ describe("request approval authorization and transitions", () => {
         mockedReadSession.mockResolvedValue({userId: familyId, familyId, role: "guardian"});
         mockedFindMany.mockResolvedValue({documents: []});
         mockedUpdateOne.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
+        mockedUpdateOneById.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
+        mockedWithMongoTransaction.mockImplementation(operation => operation(databaseSession));
     });
 
     it("conceals requests owned by another family", async () => {
@@ -84,6 +92,42 @@ describe("request approval authorization and transitions", () => {
         expect(mockedUpdateOne).toHaveBeenCalledWith("transactions", {
             _id: {$oid: transactionId},
             approved: ApprovalStatus.Pending,
-        }, {approved: ApprovalStatus.Approved});
+        }, {
+            approved: ApprovalStatus.Approved,
+            originalBalance: 25,
+            finalBalance: 15,
+            approvedBy: familyId,
+            approvedAt: expect.any(Date),
+        }, databaseSession);
+        expect(mockedUpdateOneById).toHaveBeenCalledWith(
+            "childaccounts",
+            childId,
+            {balance: 15},
+            databaseSession,
+        );
+    });
+
+    it("rejects a request that exceeds the stored balance without writing", async () => {
+        mockedFindById
+            .mockResolvedValueOnce({document: transaction})
+            .mockResolvedValueOnce({document: {...child, balance: 5}});
+
+        const response = await POST(new Request("http://localhost/api/transactions/id/approve", {method: "POST"}), routeParams);
+
+        expect(response.status).toBe(409);
+        expect(mockedUpdateOne).not.toHaveBeenCalled();
+        expect(mockedUpdateOneById).not.toHaveBeenCalled();
+    });
+
+    it("does not update the balance when a concurrent request wins the transition", async () => {
+        mockedFindById
+            .mockResolvedValueOnce({document: transaction})
+            .mockResolvedValueOnce({document: child});
+        mockedUpdateOne.mockResolvedValue({matchedCount: 0, modifiedCount: 0});
+
+        const response = await POST(new Request("http://localhost/api/transactions/id/approve", {method: "POST"}), routeParams);
+
+        expect(response.status).toBe(409);
+        expect(mockedUpdateOneById).not.toHaveBeenCalled();
     });
 });

@@ -1,10 +1,9 @@
 import IClient from "@models/client";
 import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {Option} from "@models/option";
-import {IUser} from "@models/user";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {ApprovalStatus, Transaction} from "@models/transaction";
-import type {DeleteResponse, UpdateOneResponse} from "@mongoDataApiHelper";
+import type {DeleteResponse} from "@mongoDataApiHelper";
 
 export default class MongoDbClient implements IClient {
 
@@ -34,17 +33,6 @@ export default class MongoDbClient implements IClient {
 
     async logout(): Promise<void> {
         await fetch(`/api/auth`, {method: "DELETE"});
-    }
-
-    async updateChildAccount(user: IUser, options?: Option | undefined): Promise<ChildAccount|null> {
-        try{
-            const response = await this.patch<UpdateOneResponse>(`/api/childaccount/${user._id}`, user);
-            if(response?.modifiedCount === 0) console.log('no user updated');
-            return user as ChildAccount;
-        } catch (e) {
-            console.log(e);
-            return null;
-        }
     }
 
     async addChildUser(childData: CreateChildAccountInput, options?: Option | undefined): Promise<ChildAccount | null> {
@@ -102,9 +90,16 @@ export default class MongoDbClient implements IClient {
         return response as Promise<Transaction[]>;
     }
 
-    approveRequest(transaction: Transaction, options?: Option | undefined): Promise<Transaction[]> {
-        const response = this.post<Transaction[]>(`/api/transactions/${transaction._id}/approve`, transaction);
-        return response as Promise<Transaction[]>;
+    async approveRequest(transaction: Transaction, options?: Option | undefined): Promise<Transaction[]> {
+        const response = await fetch(`/api/transactions/${transaction._id}/approve`, {
+            method: "POST",
+            body: JSON.stringify(transaction),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to approve request");
+        }
+        return await response.json() as Transaction[];
     }
 
     rejectRequest(transaction: Transaction, options?: Option | undefined): Promise<Transaction[]> {
@@ -153,20 +148,6 @@ export default class MongoDbClient implements IClient {
     }
 
     private async put<T>(url:string, body?:any, headers?:any): Promise<T | null>{
-        try{
-            const response = await fetch(url,{
-                method: 'PUT',
-                body: JSON.stringify(body),
-                headers: headers
-            });
-            return await response.json();
-        }catch (e){
-            console.log(e);
-            return null;
-        }
-    }
-
-    private async patch<T>(url:string, body?:any, headers?:any):Promise<T | null>{
         try{
             const response = await fetch(url,{
                 method: 'PUT',

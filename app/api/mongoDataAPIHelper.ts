@@ -2,6 +2,7 @@ import "server-only";
 
 import {
     Collection as MongoCollection,
+    ClientSession,
     Document,
     Filter,
     MongoClient,
@@ -129,9 +130,9 @@ function withoutImmutableId(update: object): Document {
     return mutableFields;
 }
 
-export async function findById<T>(collection: string, id: string): Promise<FindOneResponse<T> | null> {
+export async function findById<T>(collection: string, id: string, session?: ClientSession): Promise<FindOneResponse<T> | null> {
     try {
-        const document = await (await getCollection(collection)).findOne(idFilter(id));
+        const document = await (await getCollection(collection)).findOne(idFilter(id), {session});
         return {document: fromMongoValue(document) as T | null};
     } catch (error) {
         reportFailure("findById", error);
@@ -151,10 +152,10 @@ export async function findOne<T>(collection: string, filter: object = {}): Promi
     }
 }
 
-export async function findMany<T>(collection: string, filter: object = {}): Promise<FindManyResponse<T> | null> {
+export async function findMany<T>(collection: string, filter: object = {}, session?: ClientSession): Promise<FindManyResponse<T> | null> {
     try {
         const documents = await (await getCollection(collection))
-            .find(toMongoValue(filter) as Filter<Document>)
+            .find(toMongoValue(filter) as Filter<Document>, {session})
             .toArray();
         return {documents: fromMongoValue(documents) as T[]};
     } catch (error) {
@@ -191,19 +192,22 @@ export async function updateOneById<T>(
     collection: string,
     id: string,
     update: object,
+    session?: ClientSession,
 ): Promise<UpdateOneResponse | null> {
-    return updateOne<T>(collection, idFilter(id), update);
+    return updateOne<T>(collection, idFilter(id), update, session);
 }
 
 export async function updateOne<T>(
     collection: string,
     filter: object,
     update: object,
+    session?: ClientSession,
 ): Promise<UpdateOneResponse | null> {
     try {
         const result = await (await getCollection(collection)).updateOne(
             toMongoValue(filter) as Filter<Document>,
             {$set: withoutImmutableId(update)},
+            {session},
         );
         return {
             matchedCount: result.matchedCount,
@@ -214,6 +218,11 @@ export async function updateOne<T>(
         reportFailure("updateOne", error);
         return null;
     }
+}
+
+export async function withMongoTransaction<T>(operation: (session: ClientSession) => Promise<T>): Promise<T> {
+    const client = await getMongoClient();
+    return client.withSession(session => session.withTransaction(() => operation(session)));
 }
 
 export async function deleteById(collection: string, id: string): Promise<DeleteResponse | null> {

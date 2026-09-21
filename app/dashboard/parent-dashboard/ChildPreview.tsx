@@ -35,12 +35,12 @@ export function ChildPreview({child}: ChildPreviewProps) {
             setLoading(true);
             const remainingPendingRequests = await client.approveRequest({...request, approved: ApprovalStatus.Approved});
             const updatedChild = {...child, balance: currentBalance - request.amount};
-            await client.updateChildAccount(updatedChild);
             setCurrentBalance(updatedChild.balance);
             setPendingRequests(remainingPendingRequests);
             setLoading(false);
         } catch (error) {
             console.log(error);
+            setLoading(false);
         }
     }
 
@@ -94,7 +94,7 @@ export function ChildPreview({child}: ChildPreviewProps) {
                     <div className={'flex flex-row justify-between'}>
                         <div className={'flex flex-col pb-2 pt-2'}>
                             <div className={'text-base'}>{child.displayName}</div>
-                            <div className={'font-bold text-2xl'}>${currentBalance}</div>
+                            <div className={'font-bold text-2xl'}>$<span data-testid={`child-balance-${child._id}`}>{currentBalance}</span></div>
                             <div className={'text-sm text-gray-400'}>{child.interest}% Interest</div>
 
                             {pendingRequests.length > 0 &&

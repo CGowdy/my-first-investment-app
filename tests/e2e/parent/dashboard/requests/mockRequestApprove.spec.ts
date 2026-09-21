@@ -11,8 +11,10 @@ test.describe('Mock Pending Requests Approve', () => {
 
     test('should approve request', async ({page}) => {
         await expect(page.getByText('Request $10')).toBeVisible();
+        await expect(page.getByTestId('child-balance-2')).toHaveText('250');
         await page.getByRole('button', {name: 'Approve'}).click();
         const thing = page.getByText('Request $10');
         await expect(thing).toBeHidden();
+        await expect(page.getByTestId('child-balance-2')).toHaveText('240');
     });
 });

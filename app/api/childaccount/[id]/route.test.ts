@@ -1,21 +1,19 @@
 /** @jest-environment node */
 
 import type {ChildAccount} from "@models/child-account";
-import {findById, updateOneById} from "../../mongoDataAPIHelper";
+import {findById} from "../../mongoDataAPIHelper";
 import {readSession} from "../../../server/auth/session";
-import {GET, PUT} from "./route";
+import {GET} from "./route";
 
 jest.mock("../../mongoDataAPIHelper", () => ({
     Collection: {ChildAccounts: "childaccounts"},
     findById: jest.fn(),
-    updateOneById: jest.fn(),
 }));
 
 jest.mock("../../../server/auth/session", () => ({readSession: jest.fn()}));
 
 const mockedReadSession = jest.mocked(readSession);
 const mockedFindById = jest.mocked(findById);
-const mockedUpdateOneById = jest.mocked(updateOneById);
 
 const childId = "child-1";
 const familyId = "guardian-1";
@@ -55,30 +53,4 @@ describe("child account route authorization", () => {
         expect(response.status).toBe(404);
     });
 
-    it("does not let a child mutate their balance", async () => {
-        mockedReadSession.mockResolvedValue({userId: childId, familyId, role: "child"});
-        const request = new Request("http://localhost/api/childaccount/child-1", {
-            method: "PUT",
-            body: JSON.stringify({balance: 100}),
-        });
-
-        const response = await PUT(request, routeParams);
-
-        expect(response.status).toBe(404);
-        expect(mockedUpdateOneById).not.toHaveBeenCalled();
-    });
-
-    it("only persists the allowed balance field for the owning guardian", async () => {
-        mockedReadSession.mockResolvedValue({userId: familyId, familyId, role: "guardian"});
-        mockedUpdateOneById.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
-        const request = new Request("http://localhost/api/childaccount/child-1", {
-            method: "PUT",
-            body: JSON.stringify({balance: 100, parentId: "attacker", interest: 999}),
-        });
-
-        const response = await PUT(request, routeParams);
-
-        expect(response.status).toBe(200);
-        expect(mockedUpdateOneById).toHaveBeenCalledWith("childaccounts", childId, {balance: 100});
-    });
 });

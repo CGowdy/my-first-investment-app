@@ -13,8 +13,10 @@ test.describe('Mongo Request Approval', () => {
     test('should approve request', async ({page, request}) => {
         const requestComponent = page.getByText(`Request $10Reason: ${currentTransactionId}`);
         await expect(requestComponent).toBeVisible();
+        await expect(page.getByTestId('child-balance-65ada4aaf492160c42729149')).toHaveText('100');
         await requestComponent.getByRole('button', {name: 'Approve'}).click();
         await expect(requestComponent).toBeHidden();
+        await expect(page.getByTestId('child-balance-65ada4aaf492160c42729149')).toHaveText('90');
     });
 
 });
