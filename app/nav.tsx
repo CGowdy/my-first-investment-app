@@ -16,7 +16,7 @@ export default function Nav() {
 
 	const {user,logout} = authContext;
 	return (
-		<div className={"border-b-2"}>
+		<div className={"border-b border-slate-200 bg-white text-slate-900 shadow-sm"}>
 			<div className={"flex mx-4 mt-4 pb-2"}>
 				{navLinks.map((link) => (
 					<Link key={link.href} href={link.href} className={"mx-2"}>{link.text}</Link>

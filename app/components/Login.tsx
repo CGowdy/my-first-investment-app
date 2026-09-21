@@ -5,21 +5,50 @@ import Input from "@components/Input";
 import Button from "@components/button/Button";
 
 export default function Login() {
+	const [creatingAccount, setCreatingAccount] = useState(false);
+	const [displayName, setDisplayName] = useState("");
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
 	const authContext = useContext(AuthContext);
-	const [loginFailed, setLoginFailed] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const login = async () => {
 		const loginSuccess = await authContext?.login({username: username, password: password});
-		setLoginFailed(!loginSuccess);
+		setError(loginSuccess ? null : "Invalid username or password");
 	}
+	const register = async () => {
+		if (password !== confirmPassword) {
+			setError("Passwords do not match");
+			return;
+		}
+		const result = await authContext?.register({username, displayName, password});
+		setError(result?.ok ? null : result?.error ?? "Unable to create account");
+	};
+	const switchMode = () => {
+		setCreatingAccount(current => !current);
+		setError(null);
+		setPassword("");
+		setConfirmPassword("");
+	};
 
 	return (
-		<div className={"rounded-md p-4"}>
+		<div className={"rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm"}>
+			<h2 className="mb-1 text-2xl font-semibold">{creatingAccount ? "Create a guardian account" : "Sign in"}</h2>
+			<p className="mb-5 text-sm text-slate-600">
+				{creatingAccount ? "Guardian accounts can create and manage child profiles." : "Use your guardian or child username."}
+			</p>
+			{creatingAccount ? <div className={"mb-3 flex-col"}>
+				<label htmlFor={"display-name"}>Display name</label>
+				<Input
+					type={"text"}
+					inputText={displayName}
+					inputName={"display-name"}
+					onInputChanged={setDisplayName}
+				/>
+			</div> : null}
 			<div className={"flex-col mb-3"}>
 				<label htmlFor={"username"}>Username</label>
 				<Input
-					className={"block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 sm:text-sm text-white sm:leading-6"}
 					type={"text"}
 					inputText={username}
 					inputName={"username"}
@@ -32,18 +61,37 @@ export default function Login() {
 			<div className={"flex-col mb-3"}>
 				<label htmlFor={"password"}>Password</label>
 				<Input
-					className={"block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 text-white sm:text-sm sm:leading-6"}
 					type={"password"}
 					inputName={"password"}
 					inputText={password}
 					onInputChanged={(e) => setPassword(e)}
 					onKeyPress={(event) => {
-						if (event.key === 'Enter') void login();
+						if (event.key === 'Enter' && !creatingAccount) void login();
 					}}
 				/>
 			</div>
-			{loginFailed ? <div className={"text-red-500"}>Login Failed</div>:null}
-			<Button className={"my-4"} buttonText="Login" onButtonPressed={login}/>
+			{creatingAccount ? <div className={"mb-3 flex-col"}>
+				<label htmlFor={"confirm-password"}>Confirm password</label>
+				<Input
+					type={"password"}
+					inputName={"confirm-password"}
+					inputText={confirmPassword}
+					onInputChanged={setConfirmPassword}
+					onKeyPress={(event) => {
+						if (event.key === 'Enter') void register();
+					}}
+				/>
+				<p className="mt-1 text-xs text-slate-500">Use at least 8 characters.</p>
+			</div> : null}
+			{error ? <div role="alert" className={"text-sm font-medium text-red-700"}>{error}</div>:null}
+			<div className="mt-4 flex flex-wrap items-center gap-3">
+				<Button buttonText={creatingAccount ? "Create account" : "Login"} onButtonPressed={creatingAccount ? register : login}/>
+				<Button
+					variant="tertiary"
+					buttonText={creatingAccount ? "Back to sign in" : "Create an account"}
+					onButtonPressed={switchMode}
+				/>
+			</div>
 		</div>
 	);
 }

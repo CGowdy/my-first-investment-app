@@ -13,13 +13,15 @@
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:all": "playwright test --project=chromium --project=firefox --project=webkit --project=mobile-chrome --project=mobile-safari",
     "db:seed:integration": "node scripts/seed-mongo-integration.mjs",
+    "db:seed:manual": "node scripts/seed-mongo-manual.mjs",
     "db:cleanup:integration": "node scripts/cleanup-mongo-integration.mjs",
     "test:e2e:integration": "node scripts/run-mongo-integration.mjs",
     "check": "npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e",
     "test:watch": "jest --watchAll",
     "test:coverage": "jest --coverage",
     "playwright:install": "playwright install chromium",
-    "playwright:ui": "playwright test --ui --project=chromium"
+    "playwright:ui": "playwright test --ui --project=chromium",
+    "setup:auth-secret": "node scripts/ensure-local-auth-secret.mjs"
   },
   "engines": {
     "node": ">=20.9"

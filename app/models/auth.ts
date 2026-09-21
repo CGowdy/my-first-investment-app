@@ -6,6 +6,10 @@ export interface LoginData {
     password: string;
 }
 
+export interface GuardianRegistrationData extends LoginData {
+    displayName: string;
+}
+
 export type AuthenticatedUser = IUser;
 export type AuthenticatedChildAccount = ChildAccount;
 export type AuthenticatedAccount = AuthenticatedUser | AuthenticatedChildAccount;

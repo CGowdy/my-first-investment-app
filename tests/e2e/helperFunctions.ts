@@ -23,6 +23,7 @@ export const performLogin = async (page: Page, username:string, password:string)
     await expect(page.getByRole('link', {name: 'Logout'})).toBeVisible();
 };
 export const loginAsMockParent = async (page: Page) => {
+    await configMockEnvironment(page);
     await performLogin(page, 'parent1', 'pass123');
 }
 

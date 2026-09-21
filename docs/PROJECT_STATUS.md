@@ -6,6 +6,7 @@ Last reviewed: 2026-09-21
 
 - Next.js 16, React 19, TypeScript, and Tailwind CSS 4 prototype.
 - Parent and child login/dashboard paths.
+- Self-service guardian registration; guardians create child access within their family.
 - Parent creation of child accounts and balance adjustments.
 - Child purchase requests with parent approval or denial.
 - Lazy simulated daily compound-growth settlement with no scheduler or background jobs.
@@ -21,11 +22,11 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 24 suites and 98 deterministic tests pass. |
+| `npm run test:unit` | Passing | 27 suites and 111 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
-| `npm run test:e2e` | Passing | 25 mock-backed Chromium tests pass using a Playwright-managed local server. |
+| `npm run test:e2e` | Passing | 26 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
-| Mongo Playwright integration | Passing | 24 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs. |
+| Mongo Playwright integration | Passing | 25 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs and usernames. |
 
 ## MongoDB Atlas status
 
@@ -46,6 +47,7 @@ Last reviewed: 2026-09-21
 
 - The prototype proves the main family interaction, but account recovery, rate limiting, CSRF policy, and production operations still need explicit designs before public launch.
 - Authentication uses bcrypt password hashes and a signed, expiring HttpOnly cookie. Browser storage no longer acts as session authority, and account DTOs cannot contain password material.
+- Mock and Mongo-backed development can provide documented `test-adult` and `test-child` manual-test fixtures without using real family credentials.
 - Data-bearing routes enforce guardian-family or child-self authorization on the server. Client-supplied IDs and transaction status fields are not treated as authority.
 - Generic transaction deletion is disabled; Mongo integration setup owns fixture cleanup directly.
 - Purchase-request approval uses one shared domain decision for mock and Mongo paths, records the approving guardian and time, conditionally transitions a pending request, and updates its before/after ledger values and child balance in one MongoDB transaction. The browser no longer receives a generic balance-overwrite operation.

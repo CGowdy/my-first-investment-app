@@ -73,7 +73,7 @@ export function ChildPreview({child}: ChildPreviewProps) {
     }
 
     return (
-        <div data-testid={`child-preview-${child._id}`} className={`shadow-lg  rounded-lg text-black  pl-2 pr-0 pb-0 relative  ${pendingRequests.length === 0 ? 'ring-1 bg-gray-200 ring-emerald-700 dark:ring-emerald-300' : 'bg-gray-200 ring-blue-700 ring-2'} z-10`}>
+        <div data-testid={`child-preview-${child._id}`} className={`shadow-lg  rounded-lg text-black  pl-2 pr-0 pb-0 relative  ${pendingRequests.length === 0 ? 'ring-1 bg-gray-200 ring-emerald-700' : 'bg-gray-200 ring-blue-700 ring-2'} z-10`}>
             {/*<Button buttonText="Delete" className={'ml-4'} onButtonPressed={() => onDeletePressed(child.id)}/> to be implemented in issue #12*/}
 
             {loadingRequests && <div>Loading requests...</div>}

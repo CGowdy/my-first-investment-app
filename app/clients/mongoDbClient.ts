@@ -1,5 +1,5 @@
 import IClient from "@models/client";
-import type {AuthenticatedAccount, LoginData} from "@models/auth";
+import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {Option} from "@models/option";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {Transaction} from "@models/transaction";
@@ -7,6 +7,18 @@ import {Transaction} from "@models/transaction";
 type DeleteChildAccountResponse = {deletedCount: number};
 
 export default class MongoDbClient implements IClient {
+
+    async registerGuardian(registration: GuardianRegistrationData): Promise<AuthenticatedAccount> {
+        const response = await fetch("/api/auth/register", {
+            method: "POST",
+            body: JSON.stringify(registration),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to create account");
+        }
+        return await response.json() as AuthenticatedAccount;
+    }
 
     async auth(userData: LoginData, options?: Option | undefined): Promise<AuthenticatedAccount | null> {
         try {

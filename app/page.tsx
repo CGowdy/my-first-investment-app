@@ -2,7 +2,7 @@ export default function Home() {
 
     return (
         <>
-            <main className={"prose dark:prose-invert"}>
+            <main className={"prose"}>
                 <h1 className={""}>Welcome to My First Investment App!</h1>
                 <p>This application is designed to help parents save money and teach children about the benefits of saving. Here, you can simulate the process of earning interest on savings, without
                     any real money being involved.</p>

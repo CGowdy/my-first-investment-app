@@ -1,10 +1,11 @@
-import type {AuthenticatedAccount, LoginData} from "@models/auth";
+import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {Option} from "@models/option";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {Transaction} from "@models/transaction";
 
 export default interface IClient {
     auth(userData: LoginData, options?:Option): Promise<AuthenticatedAccount | null>;
+    registerGuardian(registration: GuardianRegistrationData): Promise<AuthenticatedAccount>;
     getSession(): Promise<AuthenticatedAccount | null>;
     logout(): Promise<void>;
 

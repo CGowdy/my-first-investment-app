@@ -4,6 +4,35 @@ import {AuthContext} from '@contexts/AuthContext';
 import Login from '@components/Login';
 
 describe('Login', () => {
+    it('lets a guardian create an account', async () => {
+        const mockRegister = jest.fn().mockResolvedValue({ok: true});
+        const mockAuthContext = {
+            login: jest.fn(),
+            register: mockRegister,
+            logout: jest.fn(),
+            user: null,
+        };
+
+        render(
+            <AuthContext.Provider value={mockAuthContext as never}>
+                <Login/>
+            </AuthContext.Provider>
+        );
+
+        await userEvent.click(screen.getByRole('button', {name: 'Create an account'}));
+        await userEvent.type(screen.getByLabelText('Display name'), 'Test Adult');
+        await userEvent.type(screen.getByLabelText('Username'), 'test-adult');
+        await userEvent.type(screen.getByLabelText('Password'), 'test-pass-123');
+        await userEvent.type(screen.getByLabelText('Confirm password'), 'test-pass-123');
+        await userEvent.click(screen.getByRole('button', {name: 'Create account'}));
+
+        expect(mockRegister).toHaveBeenCalledWith({
+            displayName: 'Test Adult',
+            username: 'test-adult',
+            password: 'test-pass-123',
+        });
+    });
+
     it('calls the login function with the correct username and password', async () => {
         const mockLogin = jest.fn();
         mockLogin.mockResolvedValue(true);
@@ -11,6 +40,7 @@ describe('Login', () => {
         const mockUser = null;
         const mockAuthContext = {
             login: mockLogin,
+            register: jest.fn(),
             logout: mockLogout,
             user: mockUser
         };
@@ -43,6 +73,7 @@ describe('Login', () => {
         const mockUser = null;
         const mockAuthContext = {
             login: mockLogin,
+            register: jest.fn(),
             logout: mockLogout,
             user: mockUser
         };
@@ -65,7 +96,7 @@ describe('Login', () => {
             username: 'testuser',
             password: 'testpassword',
         });
-        expect(screen.getByText('Login Failed')).toBeInTheDocument();
+        expect(screen.getByRole('alert')).toHaveTextContent('Invalid username or password');
     });
 
     it('should call login when the enter key is pressed', async () => {
@@ -75,6 +106,7 @@ describe('Login', () => {
         const mockUser = null;
         const mockAuthContext = {
             login: mockLogin,
+            register: jest.fn(),
             logout: mockLogout,
             user: mockUser
         };

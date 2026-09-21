@@ -14,6 +14,10 @@ function sessionSecret(): string {
     return secret;
 }
 
+export function assertSessionConfigured(): void {
+    void sessionSecret();
+}
+
 export async function createSession(identity: SessionIdentity): Promise<void> {
     const token = await signSessionToken(identity, sessionSecret());
     const cookieStore = await cookies();

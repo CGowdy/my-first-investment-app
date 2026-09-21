@@ -1,5 +1,5 @@
 import IClient from '@models/client';
-import type {AuthenticatedAccount, LoginData} from "@models/auth";
+import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
@@ -10,20 +10,25 @@ import {approvePurchaseRequest} from "../domain/purchase-request";
 import {createBalanceAdjustment} from "../domain/balance-adjustment";
 import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
 import {createGrowthAccrual, type GrowthAccrualDecision} from "../domain/growth-accrual";
+import {parseGuardianRegistration} from "../domain/guardian-registration";
 
 
 type MockUser = IUser & {passwordHash: string};
 
 const mockPasswordHash = "$2b$12$198GTcO3AK1lq.dt7ZNZV.gdHaOlhOB23msT2Ga0MwALWj2WhdDFm";
+const manualTestPasswordHash = "$2b$12$5mTxvwSKsTjEB1FtLcp.EOy5F4OKTNqCVDfXaD5p0MT9/EEtMO.Mu";
 
 export const mockChildren: ChildAccount[] = [
     {_id: "2", username: 'child1', displayName: 'Child 1', parentId: "1", balance: 250, balanceLastUpdated: new Date(), interest: 12},
     {_id: "123", username: 'child2', displayName: 'Child 2', parentId: "1", balance: 1150, balanceLastUpdated: new Date(), interest: 12},
+    {_id: "manual-child", username: 'test-child', displayName: 'Test Child', parentId: "manual-parent", balance: 100, balanceLastUpdated: new Date(), interest: 5},
 ];
 export const mockUsers: MockUser[] = [
     {_id: "1", username: 'parent1', passwordHash: mockPasswordHash, displayName: 'Parent One'},
     {_id: "2", username: 'child1', passwordHash: mockPasswordHash, displayName: 'Child 1', isChildAccount: true},
-    {_id: "123", username: 'child2', passwordHash: mockPasswordHash, displayName: 'Child 2', isChildAccount: true}
+    {_id: "123", username: 'child2', passwordHash: mockPasswordHash, displayName: 'Child 2', isChildAccount: true},
+    {_id: "manual-parent", username: 'test-adult', passwordHash: manualTestPasswordHash, displayName: 'Test Adult', isChildAccount: false},
+    {_id: "manual-child", username: 'test-child', passwordHash: manualTestPasswordHash, displayName: 'Test Child', isChildAccount: true},
 ];
 
 export const mockRequests: Transaction[] = []
@@ -41,6 +46,26 @@ function applyMockGrowthDecision(child: ChildAccount, decision: GrowthAccrualDec
 
 export default class MockClient implements IClient {
     private session: AuthenticatedAccount | null = null;
+
+    async registerGuardian(value: GuardianRegistrationData): Promise<AuthenticatedAccount> {
+        const registration = parseGuardianRegistration(value);
+        if (!registration) throw new Error("Enter a username, display name, and password of at least 8 characters");
+        if (mockUsers.some(user => user.username === registration.username)) {
+            throw new Error("Username is already in use");
+        }
+
+        const guardian: MockUser = {
+            _id: guid(),
+            username: registration.username,
+            displayName: registration.displayName,
+            passwordHash: await hash(registration.password, 12),
+            isChildAccount: false,
+        };
+        mockUsers.push(guardian);
+        const {passwordHash: _passwordHash, ...safeAccount} = guardian;
+        this.session = safeAccount;
+        return safeAccount;
+    }
 
     async auth(userData: LoginData): Promise<AuthenticatedAccount | null> {
         const user = mockUsers.find(user => user.username === userData.username);

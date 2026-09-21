@@ -6,10 +6,12 @@ import {ClientContext} from './ClientContext';
 // Mock user and login data
 const mockUser = { _id: '123', username: 'testUser' };
 const mockLoginData = { username: 'testUser', password: 'password' };
+const mockRegistrationData = {username: 'newGuardian', displayName: 'New Guardian', password: 'password'};
 
 // Mock implementation for ClientContext
 const mockClientContext = {
     auth: jest.fn(),
+    registerGuardian: jest.fn(),
     getSession: jest.fn(),
     logout: jest.fn(),
     addChildUser: jest.fn(),
@@ -26,11 +28,12 @@ const mockClientContext = {
 
 // Helper component to use the AuthContext
 const ConsumerComponent = () => {
-    const { user, login, logout } = useAuth()!;
+    const { user, login, register, logout } = useAuth()!;
     return (
         <div>
             {user ? <div data-testid="user">{user.username}</div> : <div data-testid="no-user">No User</div>}
             <button data-testid="login-button" onClick={() => login(mockLoginData)}>Login</button>
+            <button data-testid="register-button" onClick={() => register(mockRegistrationData)}>Register</button>
             <button data-testid="logout-button" onClick={() => logout()}>Logout</button>
         </div>
     );
@@ -83,6 +86,25 @@ describe('AuthProvider', () => {
 
         const noUserDiv = await findByTestId('no-user');
         expect(noUserDiv).toHaveTextContent('No User');
+    });
+
+    it('registers a guardian and sets the authenticated user', async () => {
+        mockClientContext.registerGuardian.mockResolvedValue(mockUser);
+
+        const {getByTestId, findByTestId} = render(
+            <ClientContext.Provider value={mockClientContext}>
+                <AuthProvider>
+                    <ConsumerComponent/>
+                </AuthProvider>
+            </ClientContext.Provider>
+        );
+
+        act(() => {
+            getByTestId('register-button').click();
+        });
+
+        await expect(findByTestId('user')).resolves.toHaveTextContent(mockUser.username);
+        expect(mockClientContext.registerGuardian).toHaveBeenCalledWith(mockRegistrationData);
     });
 
     it('does not let stale session restoration overwrite a successful login', async () => {

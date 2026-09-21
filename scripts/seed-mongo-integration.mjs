@@ -42,6 +42,7 @@ try {
     const transactions = database.collection("transactions");
 
     await users.createIndex({username: 1}, {unique: true, name: "users_username_unique"});
+    await users.deleteOne({username: "playwright-registered-guardian"});
 
     await users.bulkWrite([
         {

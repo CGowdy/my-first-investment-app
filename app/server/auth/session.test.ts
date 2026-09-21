@@ -1,5 +1,5 @@
 import {cookies} from "next/headers";
-import {createSession, deleteSession, readSession} from "./session";
+import {assertSessionConfigured, createSession, deleteSession, readSession} from "./session";
 
 jest.mock("next/headers", () => ({
     cookies: jest.fn(),
@@ -50,5 +50,10 @@ describe("server session cookie", () => {
     it("deletes the session cookie on logout", async () => {
         await deleteSession();
         expect(cookieStore.delete).toHaveBeenCalledWith("mfi_session");
+    });
+
+    it("rejects missing or short session secrets before account persistence", () => {
+        process.env.AUTH_SECRET = "too-short";
+        expect(() => assertSessionConfigured()).toThrow("AUTH_SECRET must be configured");
     });
 });

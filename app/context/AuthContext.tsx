@@ -1,11 +1,14 @@
 'use client'
 import React, {createContext, ReactNode, useContext, useEffect, useRef, useState} from "react";
 import {ClientContext} from "./ClientContext";
-import type {AuthenticatedAccount, LoginData} from "@models/auth";
+import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
+
+type RegistrationResult = {ok: true} | {ok: false; error: string};
 
 export const useAuth = () => useContext(AuthContext);
 export const AuthContext = createContext<{
     login: (userData: LoginData) => Promise<boolean>;
+    register: (registration: GuardianRegistrationData) => Promise<RegistrationResult>;
     logout: () => Promise<void>;
     user: AuthenticatedAccount | null;
 } | null>(null);
@@ -45,8 +48,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({children})
         await clientContext.logout();
         if (authOperation.current === operation) setUser(null);
     };
+
+    const register = async (registration: GuardianRegistrationData): Promise<RegistrationResult> => {
+        const operation = ++authOperation.current;
+        try {
+            const registeredUser = await clientContext.registerGuardian(registration);
+            if (authOperation.current !== operation) return {ok: false, error: "Account creation was interrupted"};
+            setUser(registeredUser);
+            return {ok: true};
+        } catch (error) {
+            return {
+                ok: false,
+                error: error instanceof Error ? error.message : "Unable to create account",
+            };
+        }
+    };
     return (
-        <AuthContext.Provider value={{login, logout, user}}>
+        <AuthContext.Provider value={{login, register, logout, user}}>
             {children}
         </AuthContext.Provider>
     );

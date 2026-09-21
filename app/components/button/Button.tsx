@@ -8,16 +8,16 @@ export type ButtonProps = {
 }
 export default function Button({buttonText, onButtonPressed, className, variant = 'primary'}: ButtonProps) {
     const variantClassNames: Record<Variant, string> = {
-        'primary': 'bg-emerald-700',
-        'secondary': 'ring-1 ring-emerald-700 bg-transparent !text-emerald-700',
-        'tertiary': 'bg-transparent',
+        'primary': 'bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700',
+        'secondary': 'ring-1 ring-emerald-700 bg-white text-emerald-800 hover:bg-emerald-50',
+        'tertiary': 'bg-transparent text-emerald-800 hover:bg-emerald-50',
     };
 
     const variantClassName = variantClassNames[variant] || 'bg-emerald-700';
 
     return (
         <button
-            className={`${className} ${variantClassName} button rounded-md px-2 py-1 text-sm font-semibold shadow-sm`}
+            className={`${className ?? ''} ${variantClassName} button rounded-md px-2 py-1 text-sm font-semibold shadow-sm`}
             onClick={onButtonPressed}
         >
             {buttonText}

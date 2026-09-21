@@ -32,7 +32,12 @@ try {
     const database = client.db(process.env.MONGODB_DATABASE);
     await database.collection("transactions").deleteMany({childId: {$in: childIds}});
     await database.collection("childaccounts").deleteMany({fixtureKey});
-    await database.collection("users").deleteMany({fixtureKey});
+    await database.collection("users").deleteMany({
+        $or: [
+            {fixtureKey},
+            {username: "playwright-registered-guardian"},
+        ],
+    });
     console.log("MongoDB integration fixtures were removed");
 } finally {
     await client.close();

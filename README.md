@@ -33,7 +33,7 @@ See:
    npm ci
    ```
 
-2. Copy `.env.example` to `.env.local`. Keep `ENVIRONMENT=mock` for local UI work that should not call MongoDB. Mongo-backed work additionally requires the server-only MongoDB username, password, cluster host, database, and a random `AUTH_SECRET` of at least 32 characters. A complete `MONGODB_URI` may be used instead.
+2. Copy `.env.example` to `.env.local`. Keep `ENVIRONMENT=mock` for local UI work that should not call MongoDB. Mongo-backed work additionally requires the server-only MongoDB username, password, cluster host, database, and a random `AUTH_SECRET` of at least 32 characters. A complete `MONGODB_URI` may be used instead. Generate a private local session secret without printing it by running `npm run setup:auth-secret`.
 
 3. Start the application:
 
@@ -49,8 +49,18 @@ The mock accounts currently defined in `app/clients/mockClient.ts` are:
 | --- | --- | --- |
 | Parent | `parent1` | `pass123` |
 | Child | `child1` | `pass123` |
+| Parent manual tester | `test-adult` | `test-pass-123` |
+| Child manual tester | `test-child` | `test-pass-123` |
 
 These are public development fixtures, not credentials suitable for a deployed environment.
+
+Guardian accounts can also be created from the dashboard sign-in card. A signed-in guardian creates child access from **Create Child Account**, which keeps the child linked to the correct family. To create or reset the same `test-adult` and `test-child` fixtures in the configured MongoDB development database, run:
+
+```powershell
+npm run db:seed:manual
+```
+
+The manual seed is idempotent: it refreshes the two fixture login passwords without resetting the child balance or transaction history. It refuses to modify a same-named account that was not created as one of these fixtures.
 
 ## Verification
 
