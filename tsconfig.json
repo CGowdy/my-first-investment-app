@@ -35,8 +35,8 @@
       "@hooks/*": [
         "./app/hooks/*"
       ],
-      "@mongoDataApiHelper": [
-        "./app/api/mongoDataAPIHelper"
+      "@server/*": [
+        "./app/server/*"
       ],
       "@playwrightHelpers": [
         "./tests/e2e/helperFunctions"

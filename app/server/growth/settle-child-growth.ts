@@ -1,7 +1,7 @@
 import type {ClientSession} from "mongodb";
 import type {ChildAccount} from "@models/child-account";
 import type {Transaction} from "@models/transaction";
-import {Collection, insertOneOrThrow, updateOneByIdOrThrow} from "../../api/mongoDataAPIHelper";
+import {Collection, insertOneOrThrow, updateOneByIdOrThrow} from "@server/database/mongodb";
 import {createGrowthAccrual, type GrowthAccrualDecision} from "../../domain/growth-accrual";
 
 export async function settleChildGrowth(

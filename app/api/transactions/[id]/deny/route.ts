@@ -1,4 +1,4 @@
-import {Collection, findById, findMany, updateOne} from "@mongoDataApiHelper";
+import {Collection, findById, findMany, updateOne} from "@server/database/mongodb";
 import {ChildAccount} from "@models/child-account";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {canManageChild} from "../../../../server/auth/authorization";

@@ -19,7 +19,8 @@ Read `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, and `docs/PROJECT_STATUS.md` bef
 
 - `app/`: Next.js App Router UI, route handlers, contexts, domain-shaped interfaces, and data clients.
 - `app/clients/`: browser-facing `IClient` implementations for mock and Mongo-backed APIs.
-- `app/api/`: server route handlers and the MongoDB Data API adapter.
+- `app/api/`: HTTP route handlers that translate requests and responses.
+- `app/server/`: server-only application services, authentication, and database adapters.
 - `tests/e2e/`: Playwright flows; `mock*` tests are preferred for local deterministic work.
 - `docs/`: product intent, architecture, and current technical status.
 

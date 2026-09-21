@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import {Collection, findById, findOne, withMongoTransaction} from "@mongoDataApiHelper";
+import {Collection, findById, findOne, withMongoTransaction} from "@server/database/mongodb";
 import {ChildAccount} from "@models/child-account";
 import type {ApiError} from "@models/auth";
 import {parseLoginData, toAuthenticatedChildAccount, toAuthenticatedUser} from "./security";

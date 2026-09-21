@@ -1,4 +1,4 @@
-import {Collection, findById, insertOne, updateOneById, withMongoTransaction} from "@mongoDataApiHelper";
+import {Collection, findById, insertOne, updateOneById, withMongoTransaction} from "@server/database/mongodb";
 import {ChildAccount} from "@models/child-account";
 import {Transaction} from "@models/transaction";
 import {createBalanceAdjustment} from "../../../../domain/balance-adjustment";

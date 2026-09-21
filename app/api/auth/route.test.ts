@@ -3,13 +3,13 @@
 import type {ClientSession} from "mongodb";
 import type {ChildAccount} from "@models/child-account";
 import type {StoredUser} from "../../server/auth/types";
-import {findById, findOne, withMongoTransaction} from "../mongoDataAPIHelper";
+import {findById, findOne, withMongoTransaction} from "@server/database/mongodb";
 import {verifyPassword} from "../../server/auth/password";
 import {createSession, readSession} from "../../server/auth/session";
 import {settleChildGrowth} from "../../server/growth/settle-child-growth";
 import {GET, POST} from "./route";
 
-jest.mock("../mongoDataAPIHelper", () => ({
+jest.mock("@server/database/mongodb", () => ({
     Collection: {Users: "users", ChildAccounts: "childaccounts"},
     findById: jest.fn(),
     findOne: jest.fn(),

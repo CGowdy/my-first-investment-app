@@ -2,12 +2,12 @@
 
 import type {ClientSession} from "mongodb";
 import type {ChildAccount} from "@models/child-account";
-import {findMany, withMongoTransaction} from "../../../mongoDataAPIHelper";
+import {findMany, withMongoTransaction} from "@server/database/mongodb";
 import {readSession} from "../../../../server/auth/session";
 import {settleChildGrowth} from "../../../../server/growth/settle-child-growth";
 import {GET} from "./route";
 
-jest.mock("../../../mongoDataAPIHelper", () => ({
+jest.mock("@server/database/mongodb", () => ({
     Collection: {ChildAccounts: "childaccounts"},
     findMany: jest.fn(),
     withMongoTransaction: jest.fn(),

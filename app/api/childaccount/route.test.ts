@@ -7,12 +7,12 @@ import {
     insertOneOrThrow,
     isDuplicateKeyError,
     withMongoTransaction,
-} from "../mongoDataAPIHelper";
+} from "@server/database/mongodb";
 import {readSession} from "../../server/auth/session";
 import {hashPassword} from "../../server/auth/password";
 import {POST} from "./route";
 
-jest.mock("../mongoDataAPIHelper", () => ({
+jest.mock("@server/database/mongodb", () => ({
     Collection: {Users: "users", ChildAccounts: "childaccounts", Transactions: "transactions"},
     ensureUserUsernameUniqueIndex: jest.fn(),
     findOne: jest.fn(),

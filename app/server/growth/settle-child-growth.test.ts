@@ -2,10 +2,10 @@
 
 import type {ClientSession} from "mongodb";
 import type {ChildAccount} from "@models/child-account";
-import {insertOneOrThrow, updateOneByIdOrThrow} from "../../api/mongoDataAPIHelper";
+import {insertOneOrThrow, updateOneByIdOrThrow} from "@server/database/mongodb";
 import {settleChildGrowth} from "./settle-child-growth";
 
-jest.mock("../../api/mongoDataAPIHelper", () => ({
+jest.mock("@server/database/mongodb", () => ({
     Collection: {Transactions: "transactions", ChildAccounts: "childaccounts"},
     insertOneOrThrow: jest.fn(),
     updateOneByIdOrThrow: jest.fn(),

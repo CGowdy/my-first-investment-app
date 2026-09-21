@@ -3,7 +3,8 @@ import type {AuthenticatedAccount, LoginData} from "@models/auth";
 import {Option} from "@models/option";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import {Transaction} from "@models/transaction";
-import type {DeleteResponse} from "@mongoDataApiHelper";
+
+type DeleteChildAccountResponse = {deletedCount: number};
 
 export default class MongoDbClient implements IClient {
 
@@ -69,7 +70,7 @@ export default class MongoDbClient implements IClient {
 
     async deleteChildAccount(childId: string, options?: Option | undefined): Promise<void> {
         try{
-            const response = await this.delete<DeleteResponse>(`/api/childaccount/${childId}`);
+            const response = await this.delete<DeleteChildAccountResponse>(`/api/childaccount/${childId}`);
             if(response?.deletedCount === 0) console.log('no user deleted');
             return Promise.resolve();
         } catch (e) {

@@ -3,13 +3,13 @@
 import {ApprovalStatus, type Transaction} from "@models/transaction";
 import type {ChildAccount} from "@models/child-account";
 import type {ClientSession} from "mongodb";
-import {findById, findMany, updateOne, updateOneById, withMongoTransaction} from "../../../mongoDataAPIHelper";
+import {findById, findMany, updateOne, updateOneById, withMongoTransaction} from "@server/database/mongodb";
 import {readSession} from "../../../../server/auth/session";
 import {POST} from "./route";
 import {createGrowthAccrual} from "../../../../domain/growth-accrual";
 import {persistChildGrowth} from "../../../../server/growth/settle-child-growth";
 
-jest.mock("../../../mongoDataAPIHelper", () => ({
+jest.mock("@server/database/mongodb", () => ({
     Collection: {Transactions: "transactions", ChildAccounts: "childaccounts"},
     findById: jest.fn(),
     findMany: jest.fn(),

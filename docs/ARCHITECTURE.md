@@ -13,6 +13,10 @@ ClientContext -> IClient
                        |
               Next.js route handlers
                        |
+        Server application services
+                       |
+             MongoDB adapter
+                       |
           MongoDB Node.js driver
 ```
 
@@ -29,10 +33,11 @@ Lazy growth settlement uses no scheduler or background invocation. A request tha
 | UI | `app/components`, `app/dashboard` | Login, dashboards, forms, and request actions |
 | Client state | `app/context` | Selected data client and browser-side session |
 | Client gateway | `app/clients` | Mock behavior or HTTP calls to route handlers |
-| HTTP API | `app/api` | Request parsing and MongoDB operations |
-| Data adapter | `app/api/mongoDataAPIHelper.ts` | Server-only MongoDB driver access and legacy response-shape compatibility |
+| HTTP API | `app/api` | HTTP request parsing, authorization entry points, response translation, and server-operation coordination |
+| Server services | `app/server` | Server-only application orchestration, authentication, and persistence adapters |
+| Data adapter | `app/server/database/mongodb.ts` | Server-only MongoDB driver access and legacy response-shape compatibility |
 | Domain rules | `app/domain` | Framework-independent decisions such as request approval and resulting balance changes |
-| Domain-shaped types | `app/models` | Users, child accounts, transactions, balance calculation |
+| Domain-shaped types | `app/models` | Users, child accounts, transactions, and client-facing contracts |
 | Browser flows | `tests/e2e` | Mock and live-Mongo Playwright scenarios |
 
 ## Main architectural risks

@@ -6,7 +6,7 @@ import {
     insertOneOrThrow,
     isDuplicateKeyError,
     withMongoTransaction,
-} from "@mongoDataApiHelper";
+} from "@server/database/mongodb";
 import {Transaction} from "@models/transaction";
 import {hashPassword} from "../../server/auth/password";
 import type {StoredUser} from "../../server/auth/types";

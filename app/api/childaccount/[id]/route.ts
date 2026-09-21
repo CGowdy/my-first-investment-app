@@ -1,5 +1,5 @@
 import {ChildAccount} from "@models/child-account";
-import {Collection, findById, withMongoTransaction} from "@mongoDataApiHelper";
+import {Collection, findById, withMongoTransaction} from "@server/database/mongodb";
 import {canAccessChild} from "../../../server/auth/authorization";
 import {readSession} from "../../../server/auth/session";
 import {settleChildGrowth} from "../../../server/growth/settle-child-growth";
