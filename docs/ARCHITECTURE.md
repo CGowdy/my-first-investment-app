@@ -22,6 +22,8 @@ ClientContext -> IClient
 
 `AuthContext` restores a server-issued, signed HttpOnly session into React state through the selected data client. The dashboard selects a child or parent view from `isChildAccount`. `IClient` provides a replaceable browser-side data facade, which is useful for deterministic tests, but currently mixes transport concerns with application operations.
 
+Guardian child-dashboard mode is presentation state owned by the dashboard page. It renders a guardian-owned child profile through the child UI without replacing the signed guardian session. The same child-facing commands remain available, but server routes authorize the guardian-family relationship explicitly and record the signed guardian as the actor when a guardian acts on the child's behalf.
+
 The data model centers on users, child accounts, and transactions. Usernames are protected by the unique `users_username_unique` database index. Balances are also stored directly on child accounts, while transactions provide a partial history. Simulated growth is settled lazily during authenticated account reads and before balance mutations.
 
 Lazy growth settlement uses no scheduler or background invocation. A request that already needs an account calculates completed 24-hour UTC periods since `balanceLastUpdated`; if at least one cent is due, the app writes one explanatory growth transaction and the resulting balance atomically. Multiple inactive days collapse into one entry, while partial days remain pending. Principal-changing commands checkpoint at the mutation time so a new principal is never applied retroactively.

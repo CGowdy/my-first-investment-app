@@ -24,7 +24,8 @@ export function canManageChild(session: SessionIdentity, child: ChildOwnership):
 }
 
 export function canSubmitRequestForChild(session: SessionIdentity, child: ChildOwnership): boolean {
-    return session.role === "child"
-        && session.userId === child._id
-        && session.familyId === child.parentId;
+	return (session.role === "child"
+		&& session.userId === child._id
+		&& session.familyId === child.parentId)
+		|| canManageChild(session, child);
 }

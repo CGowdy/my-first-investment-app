@@ -42,9 +42,10 @@ export async function POST(req: Request, {params}: {params: Promise<{id: string}
             originalBalance: child.balance,
             childId: id,
             reason,
-            approved: ApprovalStatus.Pending,
-            date: new Date(),
-        };
+			approved: ApprovalStatus.Pending,
+			date: new Date(),
+			actorId: session.userId,
+		};
         const insertResult = await insertOne(Collection.Transactions, transaction);
         if (!insertResult?.insertedId) throw new Error("Failed to create request");
 

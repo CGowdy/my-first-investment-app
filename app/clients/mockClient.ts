@@ -147,16 +147,21 @@ export default class MockClient implements IClient {
         });
     }
 
-    sendRequest(newRequest: Transaction, options?: Option): Promise<Transaction[]> {
-        return new Promise((resolve, reject) => {
-            if (options?.error) reject(new Error(options.error));
-            const child = mockChildren.find(child => child._id === newRequest.childId);
-            if (child) {
-                newRequest._id ??= guid();
-                mockRequests.push(newRequest);
+	sendRequest(newRequest: Transaction, options?: Option): Promise<Transaction[]> {
+		return new Promise((resolve, reject) => {
+			if (options?.error) reject(new Error(options.error));
+			const child = mockChildren.find(child => child._id === newRequest.childId);
+			const canSubmit = child && this.session?._id && (
+				(this.session.isChildAccount && this.session._id === child._id)
+				|| (!this.session.isChildAccount && this.session._id === child.parentId)
+			);
+			if (child && canSubmit) {
+				newRequest._id ??= guid();
+				newRequest.actorId = this.session!._id;
+				mockRequests.push(newRequest);
                 resolve(mockRequests.filter(request => mockChildren.filter(child => newRequest.childId === child._id).map(child => child._id).includes(request.childId)));
             } else {
-                reject(new Error('Child not found'))
+				reject(new Error('Child not found'))
             }
         });
     }

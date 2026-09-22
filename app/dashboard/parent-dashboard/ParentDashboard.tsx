@@ -8,7 +8,11 @@ import {ApprovalStatus, Transaction} from "@models/transaction";
 import {ChildPreview} from "./ChildPreview";
 import Button from "@components/button/Button";
 
-export default function ParentDashboard() {
+type ParentDashboardProps = {
+	onViewAsChild: (child: ChildAccount) => void;
+};
+
+export default function ParentDashboard({onViewAsChild}: ParentDashboardProps) {
 	const [childAccounts, setChildAccounts] = useState<ChildAccount[]>([]);
 	const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -118,6 +122,7 @@ export default function ParentDashboard() {
 								onApproveRequest={handleApproveRequest}
 								onDenyRequest={handleDenyRequest}
 								onBalanceChanged={handleBalanceChanged}
+								onViewAsChild={onViewAsChild}
 							/>)}
 					</section>
 

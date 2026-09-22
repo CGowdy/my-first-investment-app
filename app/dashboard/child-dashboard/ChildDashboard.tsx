@@ -30,7 +30,11 @@ function ProjectionResult({label, value, testId, tone}: ProjectionResultProps) {
     );
 }
 
-export default function ChildDashboard() {
+type ChildDashboardProps = {
+	previewAccount?: ChildAccount;
+};
+
+export default function ChildDashboard({previewAccount}: ChildDashboardProps = {}) {
     const {user} = useContext(AuthContext)!;
     const [pretendSpent, setPretendSpent] = useState("");
     const [pretendAdded, setPretendAdded] = useState("");
@@ -39,7 +43,7 @@ export default function ChildDashboard() {
     const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
     const [error, setError] = useState<string>("");
     const client = useContext(ClientContext) as unknown as IClient;
-    const childAccount = user?.isChildAccount ? user as ChildAccount : null;
+    const childAccount = previewAccount ?? (user?.isChildAccount ? user as ChildAccount : null);
     const childId = childAccount?._id;
     const dailyEarnings = childAccount
         ? calculateDailyGrowth(childAccount.balance, childAccount.interest)

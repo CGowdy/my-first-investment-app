@@ -15,6 +15,7 @@ The app records a family's agreed-upon simulated balance. If a child saves enoug
 - Choose understandable simulated growth rules.
 - Review, approve, or decline purchase requests.
 - Explain how a decision changes the child's goals and balance.
+- Open a child profile's dashboard and act on the child's behalf while retaining the guardian identity for authorization and audit history.
 
 ### Child
 

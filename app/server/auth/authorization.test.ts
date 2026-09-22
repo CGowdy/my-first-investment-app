@@ -43,9 +43,10 @@ describe("family authorization", () => {
         expect(canManageChild({...guardian, familyId: "guardian-2"}, account)).toBe(false);
     });
 
-    it("only lets a child submit requests for their own account", () => {
-        expect(canSubmitRequestForChild(child, account)).toBe(true);
-        expect(canSubmitRequestForChild({...child, userId: "child-2"}, account)).toBe(false);
-        expect(canSubmitRequestForChild(guardian, account)).toBe(false);
-    });
+	it("lets a child or their owning guardian submit requests for the child account", () => {
+		expect(canSubmitRequestForChild(child, account)).toBe(true);
+		expect(canSubmitRequestForChild(guardian, account)).toBe(true);
+		expect(canSubmitRequestForChild({...child, userId: "child-2"}, account)).toBe(false);
+		expect(canSubmitRequestForChild({...guardian, familyId: "guardian-2"}, account)).toBe(false);
+	});
 });

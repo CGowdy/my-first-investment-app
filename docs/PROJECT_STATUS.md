@@ -10,6 +10,7 @@ Last reviewed: 2026-09-21
 - Growing Garden visual system across the application shell and responsive journey-style dashboards, with semantic colors for saving, spending, simulated growth, and a guardian attention queue.
 - Self-service guardian registration; guardians create child access within their family.
 - Parent creation of child accounts and balance adjustments.
+- Guardian access to each child's dashboard, including acting on the child's behalf without replacing the signed guardian identity.
 - Child purchase requests with parent approval or denial.
 - Lazy simulated daily compound-growth settlement with no scheduler or background jobs.
 - Swappable mock and MongoDB-backed clients. Server routes use the MongoDB Node.js driver; the retired Atlas Data API is no longer required.
@@ -24,9 +25,9 @@ Last reviewed: 2026-09-21
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 27 suites and 114 deterministic tests pass. |
+| `npm run test:unit` | Passing | 28 suites and 119 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
-| `npm run test:e2e` | Passing | 30 mock-backed Chromium tests pass using a Playwright-managed local server. |
+| `npm run test:e2e` | Passing | 32 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
 | Mongo Playwright integration | Passing | 25 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs and usernames. |
 

@@ -13,9 +13,10 @@ export type ChildPreviewProps = {
 	onApproveRequest: (request: Transaction) => Promise<void>;
 	onDenyRequest: (request: Transaction) => Promise<void>;
 	onBalanceChanged: (childId: string, balance: number) => void;
+	onViewAsChild: (child: ChildAccount) => void;
 }
 
-export function ChildPreview({child, pendingRequests, requestInProgress, onApproveRequest, onDenyRequest, onBalanceChanged}: ChildPreviewProps) {
+export function ChildPreview({child, pendingRequests, requestInProgress, onApproveRequest, onDenyRequest, onBalanceChanged, onViewAsChild}: ChildPreviewProps) {
 	const [loadingAdjustment, setLoadingAdjustment] = useState(false);
 	const [showRequests, setShowRequests] = useState(false);
 	const [showAdjustment, setShowAdjustment] = useState(false);
@@ -49,6 +50,7 @@ export function ChildPreview({child, pendingRequests, requestInProgress, onAppro
 				<div className="flex flex-wrap items-center gap-2 md:justify-end">
 					{pendingRequests.length > 0 && <button type="button" aria-expanded={showRequests} aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? "s" : ""}`} className="rounded-full bg-[var(--garden-learn-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-learn)]" onClick={() => setShowRequests(!showRequests)}><span>{pendingRequests.length} request{pendingRequests.length > 1 ? "s" : ""}</span> <span aria-hidden="true">{showRequests ? "▲" : "▼"}</span></button>}
 					{pendingRequests.length === 0 && <span className="rounded-full bg-[var(--garden-brand-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-brand)]">All caught up</span>}
+					<Button variant="secondary" buttonText="Act as child" onButtonPressed={() => onViewAsChild(child)}/>
 					<Button variant="secondary" buttonText="add" onButtonPressed={() => setShowAdjustment(true)}/>
 					<Button variant="secondary" className="!border-[color-mix(in_srgb,var(--garden-spend)_55%,transparent)] !text-[var(--garden-spend)]" buttonText="remove" onButtonPressed={() => setShowAdjustment(true)}/>
 				</div>
