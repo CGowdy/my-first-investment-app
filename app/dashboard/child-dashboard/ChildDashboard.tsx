@@ -7,11 +7,7 @@ import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
 import {AuthContext} from "@contexts/AuthContext";
 import IClient from "@models/client";
-
-const calculateDailyEarnings = (balance: number, yearlyInterestRate: number): number => {
-    const dailyInterestRate = yearlyInterestRate / 365;
-    return balance * dailyInterestRate;
-};
+import {calculateDailyGrowth} from "../../domain/growth-accrual";
 
 type ProjectionResultProps = {
     label: string;
@@ -46,7 +42,7 @@ export default function ChildDashboard() {
     const childAccount = user?.isChildAccount ? user as ChildAccount : null;
     const childId = childAccount?._id;
     const dailyEarnings = childAccount
-        ? calculateDailyEarnings(childAccount.balance, childAccount.interest / 100)
+        ? calculateDailyGrowth(childAccount.balance, childAccount.interest)
         : 0;
 
     useEffect(() => {
@@ -114,7 +110,7 @@ export default function ChildDashboard() {
 				</header>
 
 				{pendingRequests.length > 0 && <div className="garden-card flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-					<div><strong>{pendingRequests.length} request{pendingRequests.length > 1 ? "s are" : " is"} waiting for your parent</strong><p className="garden-muted text-sm">Available after requests</p></div>
+					<div><strong>{pendingRequests.length} request{pendingRequests.length > 1 ? "s are" : " is"} waiting for your parent</strong><p className="garden-muted text-sm">Projected balance if approved</p></div>
 					<div className="text-xl font-bold">$<span data-testid="account-balance-diff">{getReducedBalance()}</span> <span className="garden-muted text-sm font-medium">(${childAccount.balance.toFixed(2)})</span></div>
 				</div>}
 
@@ -132,7 +128,7 @@ export default function ChildDashboard() {
 							<div className="space-y-1">
 								<LabelledInput name="if-i-spend" label="If I spend" inputText={pretendSpent} onInputChanged={setPretendSpent} headerDisplay="$" placeholder="Enter amount here"/>
 								<ProjectionResult label="Then my account will have" value={(childAccount.balance - Number(pretendSpent)).toFixed(2)} testId="spend-resulting-balance" tone="spend"/>
-								<ProjectionResult label="Daily pretend growth" value={calculateDailyEarnings(childAccount.balance - Number(pretendSpent), childAccount.interest / 100).toFixed(2)} testId="spend-daily-growth" tone="spend"/>
+								<ProjectionResult label="Daily pretend growth" value={calculateDailyGrowth(childAccount.balance - Number(pretendSpent), childAccount.interest).toFixed(2)} testId="spend-daily-growth" tone="spend"/>
 							</div>
 						</section>
 						<section aria-labelledby="save-scenario-heading" className="rounded-[1.5rem] border-[3px] border-[color-mix(in_srgb,var(--garden-save)_55%,transparent)] bg-[var(--garden-save-soft)] p-5">
@@ -140,7 +136,7 @@ export default function ChildDashboard() {
 							<div className="space-y-1">
 								<LabelledInput name="if-i-save" label="If I save" inputText={pretendAdded} onInputChanged={setPretendAdded} headerDisplay="$" placeholder="Enter amount here"/>
 								<ProjectionResult label="Then my account will have" value={(childAccount.balance + Number(pretendAdded)).toFixed(2)} testId="save-resulting-balance" tone="save"/>
-								<ProjectionResult label="Daily pretend growth" value={calculateDailyEarnings(childAccount.balance + Number(pretendAdded), childAccount.interest / 100).toFixed(2)} testId="save-daily-growth" tone="save"/>
+								<ProjectionResult label="Daily pretend growth" value={calculateDailyGrowth(childAccount.balance + Number(pretendAdded), childAccount.interest).toFixed(2)} testId="save-daily-growth" tone="save"/>
 							</div>
 						</section>
 					</div>

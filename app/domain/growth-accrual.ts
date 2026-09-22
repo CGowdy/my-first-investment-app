@@ -8,6 +8,10 @@ export type GrowthAccrualDecision = {
     transaction?: Transaction;
 };
 
+export function calculateDailyGrowth(balance: number, annualInterestPercent: number): number {
+    return balance * (annualInterestPercent / 100 / 365);
+}
+
 export function createGrowthAccrual(
     child: ChildAccount,
     asOf: Date,

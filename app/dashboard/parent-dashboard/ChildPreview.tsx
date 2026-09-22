@@ -8,10 +8,10 @@ import Input from "@components/Input";
 
 export type ChildPreviewProps = {
 	child: ChildAccount;
-	onChildSelected: (child: ChildAccount) => void;
+	onBalanceChanged: (childId: string, balance: number) => void;
 }
 
-export function ChildPreview({child}: ChildPreviewProps) {
+export function ChildPreview({child, onBalanceChanged}: ChildPreviewProps) {
 	const [loading, setLoading] = useState(true);
 	const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
 	const [loadingRequests, setLoadingRequests] = useState(true);
@@ -35,7 +35,9 @@ export function ChildPreview({child}: ChildPreviewProps) {
 		try {
 			setLoading(true);
 			const remainingPendingRequests = await client.approveRequest({...request, approved: ApprovalStatus.Approved});
-			setCurrentBalance(currentBalance - request.amount);
+			const refreshedChild = await client.getChildAccount(child._id!);
+			setCurrentBalance(refreshedChild.balance);
+			onBalanceChanged(refreshedChild._id!, refreshedChild.balance);
 			setPendingRequests(remainingPendingRequests);
 			setLoading(false);
 		} catch (error) {
@@ -63,6 +65,7 @@ export function ChildPreview({child}: ChildPreviewProps) {
 			setAdjustmentError("");
 			const newBalance = await client.adjustBalance(child._id, adjustment);
 			setCurrentBalance(newBalance.balance);
+			onBalanceChanged(child._id, newBalance.balance);
 			setLoading(false);
 		} catch (error) {
 			console.log(error);

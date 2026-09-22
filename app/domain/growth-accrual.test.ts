@@ -1,6 +1,6 @@
 import {ApprovalStatus} from "@models/transaction";
 import type {ChildAccount} from "@models/child-account";
-import {createGrowthAccrual} from "./growth-accrual";
+import {calculateDailyGrowth, createGrowthAccrual} from "./growth-accrual";
 
 const child: ChildAccount = {
     _id: "child-1",
@@ -77,5 +77,11 @@ describe("createGrowthAccrual", () => {
 
         expect(createGrowthAccrual(account, new Date("2025-01-31T12:00:00.000Z")))
             .toEqual({accrued: false, elapsedDays: Number.NaN, account});
+    });
+});
+
+describe("calculateDailyGrowth", () => {
+    it("projects one day of simple growth from an annual percentage", () => {
+        expect(calculateDailyGrowth(100, 5)).toBeCloseTo(0.01369863);
     });
 });

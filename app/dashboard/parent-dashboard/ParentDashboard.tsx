@@ -15,9 +15,15 @@ export default function ParentDashboard() {
 
 	const handleCreateChildAccount = async (child: ChildAccount) => {
 		setLoadingChildAccounts(true);
-		setChildAccounts([...childAccounts, child]);
+		setChildAccounts(currentAccounts => [...currentAccounts, child]);
 		setIsDialogOpen(false);
 		setLoadingChildAccounts(false);
+	};
+
+	const handleBalanceChanged = (childId: string, balance: number) => {
+		setChildAccounts(currentAccounts => currentAccounts.map(child =>
+			child._id === childId ? {...child, balance} : child,
+		));
 	};
 
 	const {user} = useContext(AuthContext)!;
@@ -51,7 +57,7 @@ export default function ParentDashboard() {
 					<div><p className="garden-kicker">Family overview</p><h2 className="text-2xl font-semibold">Child accounts</h2></div>
 					{childAccounts.length === 0
 						? <p className="garden-muted">Create a child account to begin practicing together.</p>
-						: childAccounts.map((child) => <ChildPreview key={child._id} child={child} onChildSelected={() => console.log("child selected")}/>) }
+						: childAccounts.map((child) => <ChildPreview key={child._id} child={child} onBalanceChanged={handleBalanceChanged}/>) }
 				</section>
 			</>}
 			<CreateChildAccountDialog isOpen={isDialogOpen} onRequestClose={() => setIsDialogOpen(false)}
