@@ -49,6 +49,7 @@
   --garden-spend-soft: #fff0e7;
   --garden-learn: #8a6200;
   --garden-learn-soft: #fff4cf;
+  --garden-learn-contrast: #ffffff;
   --hover-hsl: hsl(0, 0%, 20%);
   --primary-hsl: hsl(0, 0%, 50%);
 }
@@ -74,6 +75,7 @@
   --garden-spend-soft: #48291b;
   --garden-learn: #ffd166;
   --garden-learn-soft: #453817;
+  --garden-learn-contrast: #2b2108;
 }
 
 body {

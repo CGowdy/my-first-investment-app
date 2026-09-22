@@ -4,9 +4,10 @@ export type ButtonProps = {
     onButtonPressed: () => void,
     className?: string,
     actionType?: string,
-    variant?: Variant
+    variant?: Variant,
+    disabled?: boolean
 }
-export default function Button({buttonText, onButtonPressed, className, variant = 'primary'}: ButtonProps) {
+export default function Button({buttonText, onButtonPressed, className, variant = 'primary', disabled = false}: ButtonProps) {
     const variantClassNames: Record<Variant, string> = {
         'primary': 'bg-[var(--garden-action)] text-[var(--garden-action-text)] hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--garden-brand)]',
         'secondary': 'border border-[var(--garden-border)] bg-[var(--garden-surface)] text-[var(--garden-text)] hover:bg-[var(--garden-brand-soft)]',
@@ -17,8 +18,9 @@ export default function Button({buttonText, onButtonPressed, className, variant 
 
     return (
         <button
-			className={`${className ?? ''} ${variantClassName} button rounded-full px-4 py-2 text-sm font-semibold transition-colors`}
+			className={`${className ?? ''} ${variantClassName} button rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55`}
             onClick={onButtonPressed}
+			disabled={disabled}
         >
             {buttonText}
         </button>

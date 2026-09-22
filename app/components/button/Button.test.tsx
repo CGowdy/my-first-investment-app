@@ -19,3 +19,13 @@ it('should take a className', () => {
     }} className={'bg-red-500'}/>);
     expect(screen.getByText('Click me')).toHaveClass('bg-red-500');
 });
+
+it('should prevent interaction while disabled', () => {
+    const mockCallback = jest.fn();
+    render(<Button buttonText="Saving" disabled onButtonPressed={mockCallback}/>);
+
+    const button = screen.getByRole('button', {name: 'Saving'});
+    expect(button).toBeDisabled();
+    button.click();
+    expect(mockCallback).not.toHaveBeenCalled();
+});
