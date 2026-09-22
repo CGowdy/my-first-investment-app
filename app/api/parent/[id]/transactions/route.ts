@@ -1,8 +1,6 @@
-import {ApprovalStatus, Transaction} from "@models/transaction";
-import {ChildAccount} from "@models/child-account";
-import {Collection, findMany} from "@server/database/mongodb";
 import {canManageFamily} from "../../../../server/auth/authorization";
 import {readSession} from "../../../../server/auth/session";
+import {findPendingFamilyRequests} from "../../../../server/requests/find-pending-family-requests";
 
 export async function GET(_req: Request, {params}: {params: Promise<{id: string}>}) {
     try {
@@ -16,16 +14,7 @@ export async function GET(_req: Request, {params}: {params: Promise<{id: string}
             return Response.json({error: {code: "FORBIDDEN", message: "Access denied"}}, {status: 403});
         }
 
-        const childAccounts = (await findMany<ChildAccount>(Collection.ChildAccounts, {
-            parentId: session.familyId,
-        }))?.documents ?? [];
-        if (childAccounts.length === 0) return Response.json([]);
-
-        const transactions = await findMany<Transaction>(Collection.Transactions, {
-            childId: {$in: childAccounts.map(child => child._id)},
-            approved: ApprovalStatus.Pending,
-        });
-        return Response.json(transactions?.documents ?? []);
+        return Response.json(await findPendingFamilyRequests(session.familyId));
     } catch {
         return Response.json({error: {code: "SERVER_ERROR", message: "Unable to load requests"}}, {status: 500});
     }

@@ -116,6 +116,29 @@ describe("request approval authorization and transitions", () => {
         );
     });
 
+    it("returns pending requests for every child in the family", async () => {
+        const sibling: ChildAccount = {...child, _id: "sibling-1", username: "sibling"};
+        const siblingRequest: Transaction = {
+            ...transaction,
+            _id: "sibling-request",
+            childId: "sibling-1",
+            reason: "Sibling request",
+        };
+        mockedFindById
+            .mockResolvedValueOnce({document: transaction})
+            .mockResolvedValueOnce({document: child});
+        mockedFindMany
+            .mockResolvedValueOnce({documents: [child, sibling]})
+            .mockResolvedValueOnce({documents: [siblingRequest]});
+
+        const response = await POST(new Request("http://localhost/api/transactions/id/approve", {method: "POST"}), routeParams);
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toEqual([
+            expect.objectContaining({_id: "sibling-request", childId: "sibling-1"}),
+        ]);
+    });
+
     it("rejects a request that exceeds the stored balance without writing", async () => {
         mockedFindById
             .mockResolvedValueOnce({document: transaction})

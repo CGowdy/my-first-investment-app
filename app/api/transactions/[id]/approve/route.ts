@@ -1,4 +1,4 @@
-import {Collection, findById, findMany, updateOne, updateOneById, withMongoTransaction} from "@server/database/mongodb";
+import {Collection, findById, updateOne, updateOneById, withMongoTransaction} from "@server/database/mongodb";
 import {ChildAccount} from "@models/child-account";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {canManageChild} from "../../../../server/auth/authorization";
@@ -6,6 +6,7 @@ import {readSession} from "../../../../server/auth/session";
 import {approvePurchaseRequest} from "../../../../domain/purchase-request";
 import {createGrowthAccrual} from "../../../../domain/growth-accrual";
 import {persistChildGrowth} from "../../../../server/growth/settle-child-growth";
+import {findPendingFamilyRequests} from "../../../../server/requests/find-pending-family-requests";
 
 export async function POST(_req: Request, {params}: {params: Promise<{id: string}>}) {
     try {
@@ -44,11 +45,7 @@ export async function POST(_req: Request, {params}: {params: Promise<{id: string
             );
             if (!accountUpdate?.matchedCount) throw new Error("Failed to update child balance");
 
-            const pending = await findMany<Transaction>(Collection.Transactions, {
-                childId: transaction.childId,
-                approved: ApprovalStatus.Pending,
-            }, databaseSession);
-            return {pending: pending?.documents ?? []};
+            return {pending: await findPendingFamilyRequests(session.familyId, databaseSession)};
         });
 
         if ("error" in result) {

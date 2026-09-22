@@ -1,8 +1,9 @@
-import {Collection, findById, findMany, updateOne} from "@server/database/mongodb";
+import {Collection, findById, updateOne} from "@server/database/mongodb";
 import {ChildAccount} from "@models/child-account";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {canManageChild} from "../../../../server/auth/authorization";
 import {readSession} from "../../../../server/auth/session";
+import {findPendingFamilyRequests} from "../../../../server/requests/find-pending-family-requests";
 
 export async function POST(_req: Request, {params}: {params: Promise<{id: string}>}) {
     try {
@@ -28,11 +29,7 @@ export async function POST(_req: Request, {params}: {params: Promise<{id: string
             return Response.json({error: {code: "INVALID_TRANSITION", message: "Request is no longer pending"}}, {status: 409});
         }
 
-        const pending = await findMany<Transaction>(Collection.Transactions, {
-            childId: transaction.childId,
-            approved: ApprovalStatus.Pending,
-        });
-        return Response.json(pending?.documents ?? []);
+        return Response.json(await findPendingFamilyRequests(session.familyId));
     } catch {
         return Response.json({error: {code: "SERVER_ERROR", message: "Unable to deny request"}}, {status: 500});
     }
