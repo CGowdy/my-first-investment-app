@@ -20,9 +20,11 @@ The app records a family's agreed-upon simulated balance. If a child saves enoug
 ### Child
 
 - Quickly see what is available, saved, pending, and recently changed.
+- See understandable summaries of approved spending and recorded simulated growth.
 - Move simulated money among clearly named goals or buckets.
 - Ask to spend money and explain why.
 - Explore what could happen by saving, spending, or waiting.
+- Compare long-term pretend choices on a graph without changing the account.
 - Learn from feedback without feeling like the app is a bank or a game of chance.
 
 ## Product principles
@@ -72,4 +74,5 @@ A family can create guardian and child access, record simulated funds, see a tru
 - A guardian chooses one annual percentage rate for each child account.
 - Growth compounds once per completed 24-hour UTC period and is rounded to cents when credited.
 - The app settles all elapsed days in one entry when the account is next viewed or before its balance changes. It does not run scheduled or background jobs for inactive accounts.
+- Long-term Pretend Zone projections use the same daily-compounding formula but are never persisted and never change the account or ledger.
 - Growth is educational and simulated. The interface must not present it as a guaranteed real-world return.

@@ -30,6 +30,8 @@ Guardian child-profile edits first settle or checkpoint pending growth under the
 
 Lazy growth settlement uses no scheduler or background invocation. A request that already needs an account calculates completed 24-hour UTC periods since `balanceLastUpdated`; if at least one cent is due, the app writes one explanatory growth transaction and the resulting balance atomically. Multiple inactive days collapse into one entry, while partial days remain pending. Principal-changing commands checkpoint at the mutation time so a new principal is never applied retroactively.
 
+Child reports are read models derived from the authorized transaction ledger after settling current growth. Approved purchase requests feed the spending summary; system-authored growth entries feed the interest-growth summary. Long-term Pretend Zone projections are pure domain calculations sampled into a bounded set of chart points and never write account or transaction data.
+
 ## Current boundaries
 
 | Area | Location | Responsibility today |

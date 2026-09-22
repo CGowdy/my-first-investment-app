@@ -11,12 +11,11 @@ export const baseUrl = async () : Promise<string> => {
 export const performLogin = async (page: Page, username:string, password:string) => {
     const currentUrl = page.url();
     const expectedOrigin = new URL(await baseUrl()).origin;
-    if (currentUrl === 'about:blank' || new URL(currentUrl).origin !== expectedOrigin) {
-        await page.goto('/');
-    }
-	if (new URL(page.url()).pathname !== '/dashboard') {
-		await page.getByRole('link', {name: 'My First Investment'}).click();
-	}
+    if (
+        currentUrl === 'about:blank'
+        || new URL(currentUrl).origin !== expectedOrigin
+        || new URL(currentUrl).pathname !== '/dashboard'
+    ) await page.goto('/dashboard');
     await page.getByLabel('Username').click();
     await page.getByLabel('Username').fill(username);
     await page.getByLabel('Password').click();

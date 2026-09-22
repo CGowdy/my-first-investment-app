@@ -8,6 +8,9 @@ import {Option} from "@models/option";
 import {AuthContext} from "@contexts/AuthContext";
 import IClient from "@models/client";
 import {calculateDailyGrowth} from "../../domain/growth-accrual";
+import type {ChildReport} from "@models/child-report";
+import {GrowthLab} from "./GrowthLab";
+import {MoneyReports} from "./MoneyReports";
 
 type ProjectionResultProps = {
     label: string;
@@ -41,6 +44,9 @@ export default function ChildDashboard({previewAccount}: ChildDashboardProps = {
     const [requestAmount, setRequestAmount] = useState("");
     const [requestReason, setRequestReason] = useState("");
     const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
+    const [report, setReport] = useState<ChildReport | null>(null);
+    const [reportLoading, setReportLoading] = useState(true);
+    const [reportError, setReportError] = useState("");
     const [error, setError] = useState<string>("");
     const client = useContext(ClientContext) as unknown as IClient;
     const childAccount = previewAccount ?? (user?.isChildAccount ? user as ChildAccount : null);
@@ -51,16 +57,33 @@ export default function ChildDashboard({previewAccount}: ChildDashboardProps = {
 
     useEffect(() => {
         if (!client || !childId) return;
+        let active = true;
         const fetchPendingRequests = async () => {
             try {
                 const requests = await client.getPendingRequestsForChild(childId);
-                setPendingRequests(requests);
+                if (active) setPendingRequests(requests);
             } catch (error) {
                 console.log(error);
             }
         };
+        const fetchReport = async () => {
+            setReportLoading(true);
+            setReportError("");
+            try {
+                const nextReport = await client.getChildReport(childId);
+                if (active) setReport(nextReport);
+            } catch {
+                if (active) setReportError("Your reports couldn’t load right now. Your balance and Pretend Zone are still available.");
+            } finally {
+                if (active) setReportLoading(false);
+            }
+        };
 
         fetchPendingRequests();
+        fetchReport();
+        return () => {
+            active = false;
+        };
     }, [client, childId]);
 
     const onRequestSubmit = async () => {
@@ -146,6 +169,10 @@ export default function ChildDashboard({previewAccount}: ChildDashboardProps = {
 						</section>
 					</div>
 				</section>
+
+				<GrowthLab child={childAccount}/>
+
+				<MoneyReports report={report} loading={reportLoading} error={reportError}/>
 
 				<section className="grid gap-6 rounded-[1.625rem] border-[3px] border-[color-mix(in_srgb,var(--garden-learn)_65%,transparent)] bg-[var(--garden-learn-soft)] p-6 lg:grid-cols-[0.58fr_1.42fr] lg:items-end">
 					<div><p className="garden-kicker">Ready to ask?</p><h2 className="text-2xl font-semibold">Make a purchase request</h2><p className="garden-muted mt-2">Tell your parent what you want and why.</p></div>

@@ -2,6 +2,7 @@ import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@m
 import {Option} from "@models/option";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import type {UpdateChildAccountInput} from "@models/child-account-profile";
+import type {ChildReport} from "@models/child-report";
 import {Transaction} from "@models/transaction";
 
 export default interface IClient {
@@ -16,6 +17,7 @@ export default interface IClient {
     deleteChildAccount(childId: string, options?:Option): Promise<void>;
     getChildAccount(childUserId: string): Promise<ChildAccount>;
     getChildAccounts(parentId: string, options?:Option): Promise<ChildAccount[]|null>;
+    getChildReport(childUserId: string): Promise<ChildReport>;
 
     //Transaction CRUD
     sendRequest(newRequest: Transaction, options?:Option): Promise<Transaction[]>;

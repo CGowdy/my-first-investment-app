@@ -9,7 +9,7 @@ test.describe('Mock Pretend Zone',()=>{
         accountBalance = Number.parseFloat(await page.getByTestId('account-balance').textContent()??"0");
     });
     test('should have header', async ({page}) => {
-        await expect(page.getByText('Pretend Zone')).toBeVisible();
+        await expect(page.getByRole('heading', {name: 'Pretend Zone', exact: true})).toBeVisible();
     });
 
     test('should distinguish editable amounts from calculated results', async ({page}) => {

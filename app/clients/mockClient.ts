@@ -2,6 +2,7 @@ import IClient from '@models/client';
 import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import type {UpdateChildAccountInput} from "@models/child-account-profile";
+import type {ChildReport} from "@models/child-report";
 import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
@@ -11,6 +12,7 @@ import {approvePurchaseRequest} from "../domain/purchase-request";
 import {createBalanceAdjustment} from "../domain/balance-adjustment";
 import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
 import {applyChildAccountProfileUpdate, parseUpdateChildAccount} from "../domain/child-account-profile";
+import {buildChildReport} from "../domain/child-report";
 import {createGrowthAccrual, type GrowthAccrualDecision} from "../domain/growth-accrual";
 import {parseGuardianRegistration} from "../domain/guardian-registration";
 
@@ -271,6 +273,17 @@ export default class MockClient implements IClient {
             child.balance = decision.balance;
             resolve(child);
         })
+    }
+
+    getChildReport(childUserId: string): Promise<ChildReport> {
+        const child = mockChildren.find(candidate => candidate._id === childUserId);
+        const canAccess = child && this.session?._id && (
+            (this.session.isChildAccount && this.session._id === child._id)
+            || (!this.session.isChildAccount && this.session._id === child.parentId)
+        );
+        if (!child || !canAccess) return Promise.reject(new Error("Child account not found"));
+        settleMockChildGrowth(child, new Date());
+        return Promise.resolve(buildChildReport(mockRequests.filter(request => request.childId === childUserId)));
     }
 
     async setBalance(childUserId: string, balance: number, options?: Option): Promise<ChildAccount> {

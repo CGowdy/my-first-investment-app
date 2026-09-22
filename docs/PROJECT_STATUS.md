@@ -13,6 +13,8 @@ Last reviewed: 2026-09-22
 - Guardian editing of child names, usernames, optional replacement passwords, simulated interest rates, and practice balances. Profile records update together, while balance edits remain audited adjustments.
 - Guardian access to each child's dashboard, including acting on the child's behalf without replacing the signed guardian identity.
 - Child purchase requests with parent approval or denial.
+- Child spending and simulated-growth reports derived from completed ledger activity.
+- A responsive long-term Pretend Zone graph comparing the current path with a hypothetical balance change over 30 days, one year, or five years without persisting the scenario.
 - Lazy simulated daily compound-growth settlement with no scheduler or background jobs.
 - Swappable mock and MongoDB-backed clients. Server routes use the MongoDB Node.js driver; the retired Atlas Data API is no longer required.
 - Jest component/model tests and Playwright browser flows.
@@ -26,9 +28,9 @@ Last reviewed: 2026-09-22
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 30 suites and 136 deterministic tests pass. |
+| `npm run test:unit` | Passing | 33 suites and 143 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
-| `npm run test:e2e` | Passing | 36 mock-backed Chromium tests pass using a Playwright-managed local server. |
+| `npm run test:e2e` | Passing | 38 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |
 | Mongo Playwright integration | Passing | 25 seeded Chromium tests pass against the fresh Atlas cluster; mutations are scoped to reserved fixture IDs and usernames. |
 

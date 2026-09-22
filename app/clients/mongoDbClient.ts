@@ -3,6 +3,7 @@ import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@m
 import {Option} from "@models/option";
 import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
 import type {UpdateChildAccountInput} from "@models/child-account-profile";
+import type {ChildReport} from "@models/child-report";
 import {Transaction} from "@models/transaction";
 
 type DeleteChildAccountResponse = {deletedCount: number};
@@ -146,6 +147,15 @@ export default class MongoDbClient implements IClient {
             throw new Error(error?.error?.message ?? "Unable to adjust balance");
         }
         return await response.json() as ChildAccount;
+    }
+
+    async getChildReport(childUserId: string): Promise<ChildReport> {
+        const response = await fetch(`/api/childaccount/${childUserId}/report`);
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to load child report");
+        }
+        return await response.json() as ChildReport;
     }
 
     async setBalance(childUserId: string, balance: number): Promise<ChildAccount> {

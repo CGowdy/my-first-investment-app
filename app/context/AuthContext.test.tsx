@@ -19,6 +19,7 @@ const mockClientContext = {
     deleteChildAccount: jest.fn(),
     getChildAccount: jest.fn(),
     getChildAccounts: jest.fn(),
+    getChildReport: jest.fn(),
     sendRequest: jest.fn(),
     getPendingRequestsForChild: jest.fn(),
     getPendingRequestsForParent: jest.fn(),
