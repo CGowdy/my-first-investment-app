@@ -1,7 +1,8 @@
 import IClient from "@models/client";
 import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {Option} from "@models/option";
-import {ChildAccount, CreateChildAccountInput, UpdateChildAccountInput} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
+import type {UpdateChildAccountInput} from "@models/child-account-profile";
 import {Transaction} from "@models/transaction";
 
 type DeleteChildAccountResponse = {deletedCount: number};
@@ -143,6 +144,18 @@ export default class MongoDbClient implements IClient {
         if (!response.ok) {
             const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
             throw new Error(error?.error?.message ?? "Unable to adjust balance");
+        }
+        return await response.json() as ChildAccount;
+    }
+
+    async setBalance(childUserId: string, balance: number): Promise<ChildAccount> {
+        const response = await fetch(`/api/childaccount/${childUserId}/adjustment`, {
+            method: "POST",
+            body: JSON.stringify({targetBalance: balance}),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to set balance");
         }
         return await response.json() as ChildAccount;
     }

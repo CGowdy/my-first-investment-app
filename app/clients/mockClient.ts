@@ -1,6 +1,7 @@
 import IClient from '@models/client';
 import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
-import {ChildAccount, CreateChildAccountInput, UpdateChildAccountInput} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
+import type {UpdateChildAccountInput} from "@models/child-account-profile";
 import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
@@ -9,7 +10,7 @@ import {compare, hash} from "bcryptjs";
 import {approvePurchaseRequest} from "../domain/purchase-request";
 import {createBalanceAdjustment} from "../domain/balance-adjustment";
 import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
-import {parseUpdateChildAccount} from "../domain/child-account-profile";
+import {applyChildAccountProfileUpdate, parseUpdateChildAccount} from "../domain/child-account-profile";
 import {createGrowthAccrual, type GrowthAccrualDecision} from "../domain/growth-accrual";
 import {parseGuardianRegistration} from "../domain/guardian-registration";
 
@@ -137,11 +138,8 @@ export default class MockClient implements IClient {
             username: update.username,
             ...(update.password ? {passwordHash: await hash(update.password, 12)} : {}),
         });
-        Object.assign(child, {
-            displayName: update.displayName,
-            username: update.username,
-            interest: update.interest,
-        });
+        const settledChild = settleMockChildGrowth(child, new Date(), true);
+        Object.assign(child, applyChildAccountProfileUpdate(settledChild, update));
         return child;
     }
 
@@ -273,6 +271,20 @@ export default class MockClient implements IClient {
             child.balance = decision.balance;
             resolve(child);
         })
+    }
+
+    async setBalance(childUserId: string, balance: number, options?: Option): Promise<ChildAccount> {
+        if (!Number.isFinite(balance) || balance < 0 || balance > 1_000_000_000) {
+            throw new Error("Balance must be a non-negative number");
+        }
+        const child = mockChildren.find(candidate => candidate._id === childUserId);
+        if (!child || !this.session?._id || this.session.isChildAccount || child.parentId !== this.session._id) {
+            throw new Error(`Child with id ${childUserId} not found`);
+        }
+        const settledChild = settleMockChildGrowth(child, new Date(), true);
+        const adjustment = balance - settledChild.balance;
+        if (adjustment === 0) return settledChild;
+        return this.adjustBalance(childUserId, adjustment, options);
     }
 
 }

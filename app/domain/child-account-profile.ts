@@ -1,4 +1,5 @@
-import type {UpdateChildAccountInput} from "@models/child-account";
+import type {ChildAccount} from "@models/child-account";
+import type {UpdateChildAccountInput} from "@models/child-account-profile";
 import {isValidPrototypePassword} from "./prototype-password-policy";
 
 export function parseUpdateChildAccount(value: unknown): UpdateChildAccountInput | null {
@@ -24,5 +25,17 @@ export function parseUpdateChildAccount(value: unknown): UpdateChildAccountInput
         username,
         ...(typeof password === "string" ? {password} : {}),
         interest: input.interest,
+    };
+}
+
+export function applyChildAccountProfileUpdate(
+    child: ChildAccount,
+    update: UpdateChildAccountInput,
+): ChildAccount {
+    return {
+        ...child,
+        displayName: update.displayName,
+        username: update.username,
+        interest: update.interest,
     };
 }

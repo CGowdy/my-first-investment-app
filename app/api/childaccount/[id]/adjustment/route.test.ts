@@ -48,6 +48,13 @@ function request(amount: number): Request {
     });
 }
 
+function targetBalanceRequest(targetBalance: number): Request {
+    return new Request("http://localhost/api/childaccount/id/adjustment", {
+        method: "POST",
+        body: JSON.stringify({targetBalance}),
+    });
+}
+
 describe("balance adjustment route", () => {
     beforeEach(() => {
         jest.resetAllMocks();
@@ -96,6 +103,42 @@ describe("balance adjustment route", () => {
         expect(response.status).toBe(404);
         expect(mockedInsertOne).not.toHaveBeenCalled();
         expect(mockedUpdateOneById).not.toHaveBeenCalled();
+    });
+
+    it("derives a target-balance adjustment from the authoritative settled balance", async () => {
+        const settledChild = {...child, balance: 30};
+        mockedCreateGrowthAccrual.mockReturnValue({
+            accrued: true,
+            elapsedDays: 1,
+            account: settledChild,
+            transaction: {
+                childId,
+                originalBalance: 25,
+                finalBalance: 30,
+                amount: 5,
+                reason: "Simulated growth",
+                approved: ApprovalStatus.AdminApproved,
+                date: new Date(),
+                actorId: "system:growth-rule",
+            },
+        });
+        mockedPersistChildGrowth.mockResolvedValue(settledChild);
+
+        const response = await POST(targetBalanceRequest(40), routeParams);
+
+        expect(response.status).toBe(200);
+        expect(mockedInsertOne).toHaveBeenCalledWith("transactions", expect.objectContaining({
+            amount: 10,
+            originalBalance: 30,
+            finalBalance: 40,
+        }), databaseSession);
+        expect(mockedUpdateOneById).toHaveBeenCalledWith(
+            "childaccounts",
+            childId,
+            {balance: 40},
+            databaseSession,
+        );
+        await expect(response.json()).resolves.toMatchObject({balance: 40});
     });
 
     it("does not write an overdraft", async () => {

@@ -15,8 +15,17 @@ export async function POST(req: Request, {params}: {params: Promise<{id: string}
         }
 
         const body = await req.json() as Record<string, unknown>;
-        if (typeof body.amount !== "number") {
-            return Response.json({error: {code: "INVALID_ADJUSTMENT", message: "Adjustment must be a number"}}, {status: 400});
+        const hasAmount = typeof body.amount === "number";
+        const hasTargetBalance = typeof body.targetBalance === "number";
+        if (hasAmount === hasTargetBalance) {
+            return Response.json({error: {code: "INVALID_ADJUSTMENT", message: "Provide an adjustment amount or target balance"}}, {status: 400});
+        }
+        if (hasTargetBalance && (
+            !Number.isFinite(body.targetBalance)
+            || (body.targetBalance as number) < 0
+            || (body.targetBalance as number) > 1_000_000_000
+        )) {
+            return Response.json({error: {code: "INVALID_BALANCE", message: "Balance must be a non-negative number"}}, {status: 400});
         }
         const {id} = await params;
 
@@ -26,7 +35,14 @@ export async function POST(req: Request, {params}: {params: Promise<{id: string}
 
             const recordedAt = new Date();
             const growth = createGrowthAccrual(child, recordedAt, {checkpointIfZero: true});
-            const decision = createBalanceAdjustment(growth.account, id, body.amount as number, session.userId, recordedAt);
+            const amount = hasTargetBalance
+                ? (body.targetBalance as number) - growth.account.balance
+                : body.amount as number;
+            if (hasTargetBalance && amount === 0) {
+                return {child: await persistChildGrowth(child, growth, databaseSession)};
+            }
+
+            const decision = createBalanceAdjustment(growth.account, id, amount, session.userId, recordedAt);
             if (!decision.ok) return {error: decision.reason};
             const settledChild = await persistChildGrowth(child, growth, databaseSession);
 

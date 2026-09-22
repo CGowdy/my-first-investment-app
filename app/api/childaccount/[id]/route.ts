@@ -7,7 +7,7 @@ import {
     updateOneByIdOrThrow,
     withMongoTransaction,
 } from "@server/database/mongodb";
-import {parseUpdateChildAccount} from "../../../domain/child-account-profile";
+import {applyChildAccountProfileUpdate, parseUpdateChildAccount} from "../../../domain/child-account-profile";
 import {canAccessChild, canManageChild} from "../../../server/auth/authorization";
 import {hashPassword} from "../../../server/auth/password";
 import {readSession} from "../../../server/auth/session";
@@ -59,24 +59,24 @@ export const PATCH = async (req: Request, {params}: {params: Promise<{id: string
             const child = (await findById<ChildAccount>(Collection.ChildAccounts, id, databaseSession))?.document;
             if (!child || !canManageChild(session, child)) return null;
 
+            const settledChild = await settleChildGrowth(child, new Date(), databaseSession, {checkpointIfZero: true});
+            const nextChild = applyChildAccountProfileUpdate(settledChild, update);
             const passwordHash = update.password ? await hashPassword(update.password) : undefined;
-            await updateOneByIdOrThrow(Collection.Users, id, {
+            const userUpdate = await updateOneByIdOrThrow(Collection.Users, id, {
                 displayName: update.displayName,
                 username: update.username,
                 ...(passwordHash ? {passwordHash} : {}),
             }, databaseSession);
-            await updateOneByIdOrThrow(Collection.ChildAccounts, id, {
+            if (!userUpdate.matchedCount) throw new Error("Failed to update child login");
+
+            const childUpdate = await updateOneByIdOrThrow(Collection.ChildAccounts, id, {
                 displayName: update.displayName,
                 username: update.username,
                 interest: update.interest,
             }, databaseSession);
+            if (!childUpdate.matchedCount) throw new Error("Failed to update child account");
 
-            return toAuthenticatedChildAccount({
-                ...child,
-                displayName: update.displayName,
-                username: update.username,
-                interest: update.interest,
-            });
+            return toAuthenticatedChildAccount(nextChild);
         });
 
         if (!updatedChild) return childNotFound();

@@ -92,6 +92,7 @@ describe("child account profile updates", () => {
 		mockedReadSession.mockResolvedValue({userId: familyId, familyId, role: "guardian"});
 		mockedFindById.mockResolvedValue({document: child});
 		mockedWithMongoTransaction.mockImplementation(operation => operation(databaseSession));
+		mockedSettleChildGrowth.mockResolvedValue(child);
 		mockedHashPassword.mockResolvedValue("new-password-hash");
 		mockedUpdateOneById.mockResolvedValue({matchedCount: 1, modifiedCount: 1});
 	});
@@ -119,6 +120,12 @@ describe("child account profile updates", () => {
 			username: "kid-updated",
 			interest: 8,
 		}, databaseSession);
+		expect(mockedSettleChildGrowth).toHaveBeenCalledWith(
+			child,
+			expect.any(Date),
+			databaseSession,
+			{checkpointIfZero: true},
+		);
 		await expect(response.json()).resolves.toMatchObject({
 			displayName: "Kid Updated",
 			username: "kid-updated",

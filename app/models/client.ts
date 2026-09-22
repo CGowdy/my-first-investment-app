@@ -1,6 +1,7 @@
 import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {Option} from "@models/option";
-import {ChildAccount, CreateChildAccountInput, UpdateChildAccountInput} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
+import type {UpdateChildAccountInput} from "@models/child-account-profile";
 import {Transaction} from "@models/transaction";
 
 export default interface IClient {
@@ -23,5 +24,6 @@ export default interface IClient {
     approveRequest(transaction: Transaction, options?:Option): Promise<Transaction[]>;
     rejectRequest(transaction: Transaction, options?:Option): Promise<Transaction[]>;
     adjustBalance(childUserId: string, adjustment: number, options?:Option): Promise<ChildAccount>;
+    setBalance(childUserId: string, balance: number, options?:Option): Promise<ChildAccount>;
 
 }

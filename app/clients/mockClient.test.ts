@@ -94,6 +94,28 @@ describe("MockClient child profile updates", () => {
         }
     });
 
+    it("sets a requested target balance and records only the authoritative difference", async () => {
+        const client = new MockClient();
+        await client.auth({username: "parent1", password: "pass123"});
+        const child = mockChildren.find(candidate => candidate._id === "123")!;
+        const originalChild = {...child};
+        const initialTransactionCount = mockRequests.length;
+
+        try {
+            const updated = await client.setBalance("123", 1200);
+
+            expect(updated.balance).toBe(1200);
+            expect(mockRequests.at(-1)).toMatchObject({
+                originalBalance: originalChild.balance,
+                finalBalance: 1200,
+                amount: 1200 - originalChild.balance,
+            });
+        } finally {
+            Object.assign(child, originalChild);
+            mockRequests.splice(initialTransactionCount);
+        }
+    });
+
     it("rejects updates from an unrelated guardian", async () => {
         const client = new MockClient();
         await client.auth({username: "test-adult", password: "pass123"});

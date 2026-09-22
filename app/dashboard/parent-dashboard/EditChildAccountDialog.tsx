@@ -29,6 +29,8 @@ export function EditChildAccountDialog({child, isOpen, onRequestClose, onChildUp
         if (
             !displayName.trim()
             || !username.trim()
+            || !interest.trim()
+            || !balance.trim()
             || !Number.isFinite(parsedInterest)
             || parsedInterest < 0
             || parsedInterest > 100
@@ -52,11 +54,8 @@ export function EditChildAccountDialog({child, isOpen, onRequestClose, onChildUp
             });
             onChildUpdated(updatedProfile);
 
-            const balanceAdjustment = desiredBalance - updatedProfile.balance;
-            if (balanceAdjustment !== 0) {
-                const balancedAccount = await client.adjustBalance(child._id!, balanceAdjustment);
-                onChildUpdated(balancedAccount);
-            }
+            const balancedAccount = await client.setBalance(child._id!, desiredBalance);
+            onChildUpdated(balancedAccount);
             onRequestClose();
         } catch (saveError) {
             const message = saveError instanceof Error ? saveError.message : "Unable to update child account";
