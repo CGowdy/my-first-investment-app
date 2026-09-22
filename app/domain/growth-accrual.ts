@@ -8,8 +8,27 @@ export type GrowthAccrualDecision = {
     transaction?: Transaction;
 };
 
+export const GROWTH_ACTOR_ID = "system:growth-rule";
+
 export function calculateDailyGrowth(balance: number, annualInterestPercent: number): number {
     return balance * (annualInterestPercent / 100 / 365);
+}
+
+export function calculateCompoundedGrowth(
+    balance: number,
+    annualInterestPercent: number,
+    elapsedDays: number,
+): number {
+    const dailyRate = annualInterestPercent / 100 / 365;
+    return roundCurrency(balance * (Math.pow(1 + dailyRate, elapsedDays) - 1));
+}
+
+export function calculateCompoundedBalance(
+    balance: number,
+    annualInterestPercent: number,
+    elapsedDays: number,
+): number {
+    return roundCurrency(balance + calculateCompoundedGrowth(balance, annualInterestPercent, elapsedDays));
 }
 
 export function createGrowthAccrual(
@@ -37,8 +56,7 @@ export function createGrowthAccrual(
         return {accrued: false, elapsedDays, account: checkpointedAccount};
     }
 
-    const dailyRate = child.interest / 100 / 365;
-    const amount = roundCurrency(child.balance * (Math.pow(1 + dailyRate, elapsedDays) - 1));
+    const amount = calculateCompoundedGrowth(child.balance, child.interest, elapsedDays);
     if (!Number.isFinite(amount)) return {accrued: false, elapsedDays, account: child};
     if (amount === 0) {
         return {
@@ -48,7 +66,7 @@ export function createGrowthAccrual(
         };
     }
 
-    const balance = roundCurrency(child.balance + amount);
+    const balance = calculateCompoundedBalance(child.balance, child.interest, elapsedDays);
     const balanceLastUpdated = options.checkpointIfZero
         ? asOf
         : new Date(lastUpdated.getTime() + elapsedDays * 86_400_000);
@@ -64,7 +82,7 @@ export function createGrowthAccrual(
             date: asOf,
             reason: `Simulated growth: ${elapsedDays} ${elapsedDays === 1 ? "day" : "days"} at ${child.interest}% annual`,
             approved: ApprovalStatus.AdminApproved,
-            actorId: "system:growth-rule",
+            actorId: GROWTH_ACTOR_ID,
         },
     };
 }

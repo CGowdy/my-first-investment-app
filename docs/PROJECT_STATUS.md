@@ -28,7 +28,7 @@ Last reviewed: 2026-09-22
 | --- | --- | --- |
 | `npm run lint` | Passing | ESLint 9 with the Next.js 16 flat configuration and zero warnings. |
 | `npm run typecheck` | Passing | Next route generation and TypeScript complete successfully. |
-| `npm run test:unit` | Passing | 33 suites and 143 deterministic tests pass. |
+| `npm run test:unit` | Passing | 33 suites and 144 deterministic tests pass. |
 | `npm run build` | Passing | Next.js production build completes successfully. |
 | `npm run test:e2e` | Passing | 38 mock-backed Chromium tests pass using a Playwright-managed local server. |
 | `npm audit` | Passing | No known dependency vulnerabilities. |

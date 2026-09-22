@@ -1,3 +1,5 @@
+import {calculateCompoundedBalance} from "./growth-accrual";
+
 export type GrowthProjectionPoint = {
     day: number;
     baselineBalance: number;
@@ -32,9 +34,10 @@ export function buildGrowthProjection(input: GrowthProjectionInput): GrowthProje
         || scenarioStartingBalance < 0
     ) return null;
 
-    const dailyRate = annualInterestPercent / 100 / 365;
-    const balanceAtDay = (startingBalance: number, day: number) => roundCurrency(
-        startingBalance * Math.pow(1 + dailyRate, day),
+    const balanceAtDay = (startingBalance: number, day: number) => calculateCompoundedBalance(
+        startingBalance,
+        annualInterestPercent,
+        day,
     );
     const sampleEveryDays = Math.max(1, Math.ceil(days / (MAX_CHART_POINTS - 1)));
     const sampledDays = Array.from(

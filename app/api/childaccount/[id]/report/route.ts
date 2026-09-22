@@ -19,12 +19,13 @@ export async function GET(_req: Request, {params}: {params: Promise<{id: string}
             if (!child || !canAccessChild(session, child)) return null;
 
             const settledChild = await settleChildGrowth(child, new Date(), databaseSession);
-            const transactions = (await findMany<Transaction>(
+            const transactionResult = await findMany<Transaction>(
                 Collection.Transactions,
                 {childId: settledChild._id},
                 databaseSession,
-            ))?.documents ?? [];
-            return buildChildReport(transactions);
+            );
+            if (!transactionResult) throw new Error("Unable to read the child ledger");
+            return buildChildReport(transactionResult.documents);
         });
 
         if (!report) {

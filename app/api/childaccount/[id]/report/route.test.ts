@@ -75,4 +75,17 @@ describe("child report route", () => {
         expect(response.status).toBe(404);
         expect(mockedFindMany).not.toHaveBeenCalled();
     });
+
+    it("reports a ledger read failure instead of claiming there is no activity", async () => {
+        mockedFindMany.mockResolvedValue(null);
+
+        const response = await GET(new Request("http://localhost/api/childaccount/child-1/report"), {
+            params: Promise.resolve({id: "child-1"}),
+        });
+
+        expect(response.status).toBe(500);
+        await expect(response.json()).resolves.toEqual({
+            error: {code: "SERVER_ERROR", message: "Unable to load child report"},
+        });
+    });
 });

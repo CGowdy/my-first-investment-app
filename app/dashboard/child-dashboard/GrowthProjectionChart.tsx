@@ -8,17 +8,16 @@ type GrowthProjectionChartProps = {
 const WIDTH = 640;
 const HEIGHT = 240;
 const PADDING = 28;
+const LEFT_PADDING = 64;
 
 export function GrowthProjectionChart({projection, days}: GrowthProjectionChartProps) {
     const values = projection.points.flatMap(point => [point.baselineBalance, point.scenarioBalance]);
-    const rawMinimum = Math.min(...values);
     const rawMaximum = Math.max(...values);
-    const valuePadding = Math.max(1, (rawMaximum - rawMinimum) * 0.12);
-    const minimum = Math.max(0, rawMinimum - valuePadding);
-    const maximum = rawMaximum + valuePadding;
-    const range = Math.max(1, maximum - minimum);
-    const xFor = (day: number) => PADDING + (day / days) * (WIDTH - PADDING * 2);
-    const yFor = (balance: number) => HEIGHT - PADDING - ((balance - minimum) / range) * (HEIGHT - PADDING * 2);
+    // Keep zero fixed so a larger or smaller pretend choice changes the visible
+    // height of the other path instead of being hidden by a floating scale.
+    const maximum = niceAxisMaximum(rawMaximum * 1.08);
+    const xFor = (day: number) => LEFT_PADDING + (day / days) * (WIDTH - LEFT_PADDING - PADDING);
+    const yFor = (balance: number) => HEIGHT - PADDING - (balance / maximum) * (HEIGHT - PADDING * 2);
     const pathFor = (key: "baselineBalance" | "scenarioBalance") => projection.points
         .map((point, index) => `${index === 0 ? "M" : "L"}${xFor(point.day).toFixed(1)},${yFor(point[key]).toFixed(1)}`)
         .join(" ");
@@ -35,9 +34,11 @@ export function GrowthProjectionChart({projection, days}: GrowthProjectionChartP
                 <desc id="growth-chart-description">
                     Your current balance reaches ${projection.baselineFinalBalance.toFixed(2)} and the pretend choice reaches ${projection.scenarioFinalBalance.toFixed(2)} after {days} days.
                 </desc>
+                <text x="4" y={PADDING + 5} fill="var(--garden-muted)" fontSize="13">${formatAxisValue(maximum)}</text>
+                <text x="26" y={HEIGHT - PADDING + 5} fill="var(--garden-muted)" fontSize="13">$0</text>
                 {[0.25, 0.5, 0.75].map(position => <line
                     key={position}
-                    x1={PADDING}
+                    x1={LEFT_PADDING}
                     x2={WIDTH - PADDING}
                     y1={PADDING + position * (HEIGHT - PADDING * 2)}
                     y2={PADDING + position * (HEIGHT - PADDING * 2)}
@@ -56,4 +57,16 @@ export function GrowthProjectionChart({projection, days}: GrowthProjectionChartP
             </figcaption>
         </figure>
     );
+}
+
+function formatAxisValue(value: number): string {
+    return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : Math.ceil(value).toString();
+}
+
+function niceAxisMaximum(value: number): number {
+    if (value <= 1) return 1;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+    const normalized = value / magnitude;
+    const rounded = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+    return rounded * magnitude;
 }

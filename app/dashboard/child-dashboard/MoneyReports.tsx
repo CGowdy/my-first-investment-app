@@ -45,6 +45,8 @@ function ReportCard({title, description, summary, tone, emptyMessage}: {
     tone: "spend" | "learn";
     emptyMessage: string;
 }) {
+    const previewItems = summary.items.slice(0, 3);
+    const remainingItems = summary.items.slice(3);
     const toneClasses = tone === "spend"
         ? "border-[color-mix(in_srgb,var(--garden-spend)_55%,transparent)] bg-[var(--garden-spend-soft)] text-[var(--garden-spend)]"
         : "border-[color-mix(in_srgb,var(--garden-learn)_55%,transparent)] bg-[var(--garden-learn-soft)] text-[var(--garden-learn)]";
@@ -56,14 +58,27 @@ function ReportCard({title, description, summary, tone, emptyMessage}: {
             </div>
             {summary.items.length === 0
                 ? <p className="mt-5 rounded-2xl bg-[var(--garden-surface)] p-4 text-sm text-[var(--garden-muted)]">{emptyMessage}</p>
-                : <ul className="mt-5 space-y-2">
-                    {summary.items.slice(0, 3).map(item => <li key={item.id} className="flex items-center justify-between gap-4 rounded-2xl bg-[var(--garden-surface)] px-4 py-3 text-[var(--garden-text)]">
-                        <div><strong className="block">{item.reason}</strong><time className="garden-muted text-xs" dateTime={item.date}>{formatDate(item.date)}</time></div>
-                        <span className="font-bold">${item.amount.toFixed(2)}</span>
-                    </li>)}
-                </ul>}
+                : <>
+                    <p className="mt-5 text-xs font-bold uppercase tracking-wide opacity-75">Latest activity</p>
+                    <ul className="mt-2 space-y-2">{previewItems.map(item => <ReportItem key={item.id} item={item}/>)}</ul>
+                    {remainingItems.length > 0 && <details className="mt-3 rounded-2xl bg-[var(--garden-surface)] p-3 text-[var(--garden-text)]">
+                        <summary className="cursor-pointer font-bold">View {remainingItems.length} earlier {remainingItems.length === 1 ? "entry" : "entries"}</summary>
+                        <ul className="mt-3 space-y-2">{remainingItems.map(item => <ReportItem key={item.id} item={item}/>)}</ul>
+                    </details>}
+                </>}
         </article>
     );
+}
+
+function ReportItem({item}: {item: ChildReportSummary["items"][number]}) {
+    return <li className="flex items-center justify-between gap-4 rounded-2xl bg-[var(--garden-surface)] px-4 py-3 text-[var(--garden-text)]">
+        <div>
+            <strong className="block">{item.reason}</strong>
+            <time className="garden-muted text-xs" dateTime={item.date}>{formatDate(item.date)}</time>
+            {item.resultingBalance !== undefined && <span className="garden-muted block text-xs">Balance after: ${item.resultingBalance.toFixed(2)}</span>}
+        </div>
+        <span className="font-bold">${item.amount.toFixed(2)}</span>
+    </li>;
 }
 
 function formatDate(value: string): string {

@@ -1,7 +1,6 @@
 import type {ChildReport, ChildReportItem, ChildReportSummary} from "@models/child-report";
 import {ApprovalStatus, type Transaction} from "@models/transaction";
-
-const GROWTH_ACTOR_ID = "system:growth-rule";
+import {GROWTH_ACTOR_ID} from "./growth-accrual";
 
 export function buildChildReport(transactions: Transaction[]): ChildReport {
     const spendingItems = transactions
