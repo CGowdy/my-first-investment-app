@@ -8,7 +8,7 @@ test("a parent can atomically add to their child's Mongo-backed balance", async 
     const child = page.getByTestId(`child-preview-${adjustmentChildId}`);
     await expect(child.getByTestId(`child-balance-${adjustmentChildId}`)).toHaveText("60");
 
-    await child.getByRole("button", {name: "add"}).click();
+    await child.getByRole("button", {name: "Adjust balance"}).click();
     await child.getByRole("button", {name: "+", exact: true}).click();
     const persistedAdjustment = page.waitForResponse(response =>
         response.url().includes(`/api/childaccount/${adjustmentChildId}/adjustment`)

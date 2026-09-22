@@ -24,6 +24,17 @@ export function ChildPreview({child, pendingRequests, requestInProgress, onAppro
 	const [adjustmentError, setAdjustmentError] = useState("");
 	const client = useContext(ClientContext) as unknown as IClient;
 
+	const openAdjustment = () => {
+		setAdjustmentError("");
+		setShowAdjustment(true);
+	};
+
+	const cancelAdjustment = () => {
+		setAdjustment(0);
+		setAdjustmentError("");
+		setShowAdjustment(false);
+	};
+
 	const adjustBalance = async () => {
 		try {
 			if (!child._id) return;
@@ -51,12 +62,11 @@ export function ChildPreview({child, pendingRequests, requestInProgress, onAppro
 					{pendingRequests.length > 0 && <button type="button" aria-expanded={showRequests} aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? "s" : ""}`} className="rounded-full bg-[var(--garden-learn-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-learn)]" onClick={() => setShowRequests(!showRequests)}><span>{pendingRequests.length} request{pendingRequests.length > 1 ? "s" : ""}</span> <span aria-hidden="true">{showRequests ? "▲" : "▼"}</span></button>}
 					{pendingRequests.length === 0 && <span className="rounded-full bg-[var(--garden-brand-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-brand)]">All caught up</span>}
 					<Button variant="secondary" buttonText="Act as child" onButtonPressed={() => onViewAsChild(child)}/>
-					<Button variant="secondary" buttonText="add" onButtonPressed={() => setShowAdjustment(true)}/>
-					<Button variant="secondary" className="!border-[color-mix(in_srgb,var(--garden-spend)_55%,transparent)] !text-[var(--garden-spend)]" buttonText="remove" onButtonPressed={() => setShowAdjustment(true)}/>
+					<Button variant="secondary" buttonText="Adjust balance" onButtonPressed={openAdjustment}/>
 				</div>
 			</div>
 
-			{showAdjustment && <div className="mt-4 grid gap-3 rounded-2xl border-2 border-[color-mix(in_srgb,var(--garden-learn)_55%,transparent)] bg-[var(--garden-learn-soft)] p-4 sm:grid-cols-[auto_auto_1fr_auto] sm:items-center"><Button buttonText="+" onButtonPressed={() => setAdjustment(adjustment + 1)}/><Button variant="secondary" buttonText="-" onButtonPressed={() => setAdjustment(adjustment - 1)}/><Input inputText={adjustment.toString()} onInputChanged={(newInput) => setAdjustment(Number(newInput))}/><Button variant="secondary" buttonText="Submit" onButtonPressed={adjustBalance}/></div>}
+			{showAdjustment && <div className="mt-4 grid gap-3 rounded-2xl border-2 border-[color-mix(in_srgb,var(--garden-learn)_55%,transparent)] bg-[var(--garden-learn-soft)] p-4 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-center"><Button buttonText="+" onButtonPressed={() => setAdjustment(adjustment + 1)}/><Button variant="secondary" buttonText="-" onButtonPressed={() => setAdjustment(adjustment - 1)}/><Input inputText={adjustment.toString()} onInputChanged={(newInput) => setAdjustment(Number(newInput))}/><Button variant="secondary" buttonText="Cancel" onButtonPressed={cancelAdjustment}/><Button buttonText="Submit" onButtonPressed={adjustBalance}/></div>}
 			{adjustmentError && <p role="alert" className="mt-3 text-rose-700 dark:text-rose-300">{adjustmentError}</p>}
 
 			{showRequests && <div className="mt-4 space-y-3 border-t border-[var(--garden-border)] pt-4">
