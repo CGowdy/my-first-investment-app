@@ -11,13 +11,13 @@ const PADDING = 28;
 const LEFT_PADDING = 64;
 
 export function GrowthProjectionChart({projection, days}: GrowthProjectionChartProps) {
-    const values = projection.points.flatMap(point => [point.baselineBalance, point.scenarioBalance]);
-    const rawMaximum = Math.max(...values);
-    // Keep zero fixed so a larger or smaller pretend choice changes the visible
-    // height of the other path instead of being hidden by a floating scale.
-    const maximum = niceAxisMaximum(rawMaximum * 1.08);
+    const baselineMaximum = Math.max(...projection.points.map(point => point.baselineBalance));
+    // The scale depends only on the current path, never the pretend input. That
+    // makes a larger choice always move upward instead of rescaling the chart.
+    const maximum = Math.max(1, baselineMaximum * 2);
+    const scenarioExceedsScale = projection.points.some(point => point.scenarioBalance > maximum);
     const xFor = (day: number) => LEFT_PADDING + (day / days) * (WIDTH - LEFT_PADDING - PADDING);
-    const yFor = (balance: number) => HEIGHT - PADDING - (balance / maximum) * (HEIGHT - PADDING * 2);
+    const yFor = (balance: number) => Math.max(PADDING, HEIGHT - PADDING - (balance / maximum) * (HEIGHT - PADDING * 2));
     const pathFor = (key: "baselineBalance" | "scenarioBalance") => projection.points
         .map((point, index) => `${index === 0 ? "M" : "L"}${xFor(point.day).toFixed(1)},${yFor(point[key]).toFixed(1)}`)
         .join(" ");
@@ -36,6 +36,7 @@ export function GrowthProjectionChart({projection, days}: GrowthProjectionChartP
                 </desc>
                 <text x="4" y={PADDING + 5} fill="var(--garden-muted)" fontSize="13">${formatAxisValue(maximum)}</text>
                 <text x="26" y={HEIGHT - PADDING + 5} fill="var(--garden-muted)" fontSize="13">$0</text>
+                {scenarioExceedsScale && <text x={WIDTH - PADDING} y={PADDING + 16} textAnchor="end" fill="var(--garden-save)" fontSize="13" fontWeight="700">Choice is above chart ↑</text>}
                 {[0.25, 0.5, 0.75].map(position => <line
                     key={position}
                     x1={LEFT_PADDING}
@@ -61,12 +62,4 @@ export function GrowthProjectionChart({projection, days}: GrowthProjectionChartP
 
 function formatAxisValue(value: number): string {
     return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : Math.ceil(value).toString();
-}
-
-function niceAxisMaximum(value: number): number {
-    if (value <= 1) return 1;
-    const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
-    const normalized = value / magnitude;
-    const rounded = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
-    return rounded * magnitude;
 }
