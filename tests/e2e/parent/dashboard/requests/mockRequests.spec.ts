@@ -6,12 +6,15 @@ test.describe('Mock Pending Requests', ()=>{
         await createMockChildRequest(page);
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMockParent(page);
-        await page.getByText('1 request', {exact: true}).click();
+        await page.getByTestId('child-preview-2').getByText('1 request', {exact: true}).click();
     });
     test('should render', async ({page}) => {
-        await expect(page.getByText('Request $10')).toBeVisible();
-        await expect(page.getByText('I want to test')).toBeVisible();
-        await expect(page.getByRole('button', {name: 'Approve'})).toBeVisible();
-        await expect(page.getByRole('button', {name: 'Deny'})).toBeVisible();
+        await expect(page.getByRole('region', {name: 'Family overview'}).getByText('1 request', {exact: true})).toBeVisible();
+        await expect(page.getByRole('complementary').getByRole('heading', {name: 'Purchase request'})).toBeVisible();
+        const child = page.getByTestId('child-preview-2');
+        await expect(child.getByText('Request $10')).toBeVisible();
+        await expect(child.getByText('I want to test')).toBeVisible();
+        await expect(child.getByRole('button', {name: 'Approve'})).toBeVisible();
+        await expect(child.getByRole('button', {name: 'Deny'})).toBeVisible();
     });
 });

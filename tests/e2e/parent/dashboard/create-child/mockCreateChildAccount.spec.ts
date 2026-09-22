@@ -6,7 +6,7 @@ test.describe('Mock Create Child Account', async () => {
     test.beforeEach(async ({page}) => {
         await configMockEnvironment(page);
         await loginAsMockParent(page);
-		await page.getByText('Create Child Account').click();
+		await page.getByRole('button', {name: '+ Add child'}).click();
     });
 
     test('should show the create child dialog', async ({page}) => {

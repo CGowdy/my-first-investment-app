@@ -6,13 +6,13 @@ test.describe('Mock Pending Requests Approve', () => {
         await createMockChildRequest(page);
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMockParent(page);
-        await page.getByText('1 request', {exact: true}).click();
+        await page.getByTestId('child-preview-2').getByText('1 request', {exact: true}).click();
     });
 
     test('should approve request', async ({page}) => {
         await expect(page.getByText('Request $10')).toBeVisible();
         await expect(page.getByTestId('child-balance-2')).toHaveText('250');
-        await page.getByRole('button', {name: 'Approve'}).click();
+        await page.getByTestId('child-preview-2').getByRole('button', {name: 'Approve'}).click();
         const thing = page.getByText('Request $10');
         await expect(thing).toBeHidden();
         await expect(page.getByTestId('child-balance-2')).toHaveText('240');

@@ -7,10 +7,10 @@ test.describe('Mock Login', ()=>{
         await loginAsMockParent(page);
     });
     test('should display header', async ({page}) => {
-        await expect(page.getByText('Welcome to the parent dashboard')).toBeVisible();
+        await expect(page.getByText('Good morning, Parent One.')).toBeVisible();
     });
     test('should have create child account button', async ({page}) => {
-        await expect(page.getByText('Create Child Account')).toBeVisible();
+        await expect(page.getByRole('button', {name: '+ Add child'})).toBeVisible();
     });
     test('should have logout button', async ({page}) => {
         await expect(page.getByText('Logout')).toBeVisible();

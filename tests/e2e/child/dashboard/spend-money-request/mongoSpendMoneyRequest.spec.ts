@@ -15,8 +15,8 @@ test.describe('Mongo Spend Money Request', ()=>{
         }
     });
 
-    test('should have Spend Money Request area', async ({page}) => {
-        await expect(page.getByText('Spend Money RequestI want to')).toBeVisible();
+    test('should have purchase request area', async ({page}) => {
+        await expect(page.getByRole('heading', {name: 'Make a purchase request'})).toBeVisible();
     });
 
     test('should update the account balance when a money request is made', async ({page, request}) => {
@@ -28,7 +28,7 @@ test.describe('Mongo Spend Money Request', ()=>{
             response.request().method() === 'POST' &&
             response.ok()
         );
-        await page.getByRole('button', {name: 'Request'}).click();
+        await page.getByRole('button', {name: 'Ask my parent'}).click();
         const responseData: Transaction[] = await (await persistedRequest).json();
         currentTransactionId = responseData[0]._id ?? '';
         await expect(page.getByText(`($${accountBalance.toFixed(2)})`)).toBeVisible();

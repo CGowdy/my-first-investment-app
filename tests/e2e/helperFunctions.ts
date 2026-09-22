@@ -48,7 +48,7 @@ export const createMockChildRequest = async (page: Page) => {
     await loginAsMockChild(page);
     await page.getByLabel('I want to spend', {exact:true}).fill('10');
     await page.getByLabel('I want to spend this money because').fill('I want to test');
-    await page.getByRole('button',{name:'Request'}).click();
+    await page.getByRole('button',{name:'Ask my parent'}).click();
     await expect(page.getByLabel('I want to spend', {exact: true})).toHaveValue('');
 }
 
@@ -62,7 +62,7 @@ export const createMongoChildRequest = async (page:Page) => {
         response.request().method() === 'POST' &&
         response.ok()
     );
-    await page.getByRole('button',{name:'Request'}).click();
+    await page.getByRole('button',{name:'Ask my parent'}).click();
     await persistedRequest;
     await expect(page.getByLabel('I want to spend', {exact: true})).toHaveValue('');
     return transactionId;

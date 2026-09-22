@@ -10,11 +10,12 @@ test.describe('Mock Dashboard', ()=>{
     });
 
     test('should display header', async ({page}) => {
-        await expect(page.getByText('Hello Child 1')).toBeVisible();
+        await expect(page.getByText('Good morning, Child 1')).toBeVisible();
+        await expect(page.getByRole('heading', {name: 'Your money is growing.'})).toBeVisible();
     });
 
     test('should have Account Balance Section', async ({page}) => {
-        await expect(page.getByText('Account Balance')).toBeVisible();
+        await expect(page.getByText('Available balance')).toBeVisible();
 		await expect(page.getByTestId('account-balance')).toHaveText(accountBalance.toFixed(2));
         await expect(page.getByText('Your current balance is')).toBeVisible();
         await expect(page.getByText('Today your money made you')).toBeVisible();

@@ -7,7 +7,7 @@ Last reviewed: 2026-09-21
 - Next.js 16, React 19, TypeScript, and Tailwind CSS 4 prototype.
 - Parent and child login/dashboard paths.
 - Persistent light and dark themes across the home, authentication, and dashboard screens.
-- Growing Garden visual system across the application shell and responsive dashboards, with semantic colors for saving, spending, simulated growth, and guardian attention.
+- Growing Garden visual system across the application shell and responsive journey-style dashboards, with semantic colors for saving, spending, simulated growth, and a guardian attention queue.
 - Self-service guardian registration; guardians create child access within their family.
 - Parent creation of child accounts and balance adjustments.
 - Child purchase requests with parent approval or denial.

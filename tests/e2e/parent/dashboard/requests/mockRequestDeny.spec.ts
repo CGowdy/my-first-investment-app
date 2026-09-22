@@ -6,12 +6,12 @@ test.describe('Mock Pending Requests Deny', ()=>{
         await createMockChildRequest(page);
         await page.getByRole('link', {name: 'Logout'}).click();
         await loginAsMockParent(page);
-        await page.getByText('1 request', {exact: true}).click();
+        await page.getByTestId('child-preview-2').getByText('1 request', {exact: true}).click();
     });
 
     test('should deny request', async ({page}) => {
         await expect(page.getByText('Request $10')).toBeVisible();
-        await page.getByRole('button', {name: 'Deny'}).click();
+        await page.getByTestId('child-preview-2').getByRole('button', {name: 'Deny'}).click();
         const thing = page.getByText('Request $10');
         await expect(thing).toBeHidden();
     });
