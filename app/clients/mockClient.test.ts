@@ -60,6 +60,52 @@ describe("MockClient child provisioning", () => {
     });
 });
 
+describe("MockClient child profile updates", () => {
+    it("updates both child records while leaving balance changes to the adjustment command", async () => {
+        const client = new MockClient();
+        await client.auth({username: "parent1", password: "pass123"});
+        const child = mockChildren.find(candidate => candidate._id === "123")!;
+        const user = mockUsers.find(candidate => candidate._id === "123")!;
+        const originalChild = {...child};
+        const originalUser = {...user};
+
+        try {
+            const updated = await client.updateChildAccount("123", {
+                displayName: "Kid Updated",
+                username: "kid-updated",
+                password: "new password",
+                interest: 8,
+            });
+
+            expect(updated).toMatchObject({
+                displayName: "Kid Updated",
+                username: "kid-updated",
+                interest: 8,
+                balance: originalChild.balance,
+            });
+            expect(user).toMatchObject({
+                displayName: "Kid Updated",
+                username: "kid-updated",
+                passwordHash: "hashed-password",
+            });
+        } finally {
+            Object.assign(child, originalChild);
+            Object.assign(user, originalUser);
+        }
+    });
+
+    it("rejects updates from an unrelated guardian", async () => {
+        const client = new MockClient();
+        await client.auth({username: "test-adult", password: "pass123"});
+
+        await expect(client.updateChildAccount("123", {
+            displayName: "Nope",
+            username: "nope",
+            interest: 5,
+        })).rejects.toThrow("Child account not found");
+    });
+});
+
 describe("MockClient growth accrual", () => {
     it("settles elapsed growth when a guardian loads children", async () => {
         const client = new MockClient();

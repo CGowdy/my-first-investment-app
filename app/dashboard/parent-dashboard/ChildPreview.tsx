@@ -5,6 +5,7 @@ import {ClientContext} from "@contexts/ClientContext";
 import IClient from "@models/client";
 import Button from "@components/button/Button";
 import Input from "@components/Input";
+import {EditChildAccountDialog} from "./EditChildAccountDialog";
 
 export type ChildPreviewProps = {
 	child: ChildAccount;
@@ -13,15 +14,17 @@ export type ChildPreviewProps = {
 	onApproveRequest: (request: Transaction) => Promise<void>;
 	onDenyRequest: (request: Transaction) => Promise<void>;
 	onBalanceChanged: (childId: string, balance: number) => void;
+	onChildUpdated: (child: ChildAccount) => void;
 	onViewAsChild: (child: ChildAccount) => void;
 }
 
-export function ChildPreview({child, pendingRequests, requestInProgress, onApproveRequest, onDenyRequest, onBalanceChanged, onViewAsChild}: ChildPreviewProps) {
+export function ChildPreview({child, pendingRequests, requestInProgress, onApproveRequest, onDenyRequest, onBalanceChanged, onChildUpdated, onViewAsChild}: ChildPreviewProps) {
 	const [loadingAdjustment, setLoadingAdjustment] = useState(false);
 	const [showRequests, setShowRequests] = useState(false);
 	const [showAdjustment, setShowAdjustment] = useState(false);
 	const [adjustment, setAdjustment] = useState(0);
 	const [adjustmentError, setAdjustmentError] = useState("");
+	const [showEditAccount, setShowEditAccount] = useState(false);
 	const client = useContext(ClientContext) as unknown as IClient;
 
 	const openAdjustment = () => {
@@ -62,6 +65,7 @@ export function ChildPreview({child, pendingRequests, requestInProgress, onAppro
 					{pendingRequests.length > 0 && <button type="button" aria-expanded={showRequests} aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? "s" : ""}`} className="rounded-full bg-[var(--garden-learn-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-learn)]" onClick={() => setShowRequests(!showRequests)}><span>{pendingRequests.length} request{pendingRequests.length > 1 ? "s" : ""}</span> <span aria-hidden="true">{showRequests ? "▲" : "▼"}</span></button>}
 					{pendingRequests.length === 0 && <span className="rounded-full bg-[var(--garden-brand-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-brand)]">All caught up</span>}
 					<Button variant="secondary" buttonText="Act as child" onButtonPressed={() => onViewAsChild(child)}/>
+					<Button variant="secondary" buttonText="Edit account" onButtonPressed={() => setShowEditAccount(true)}/>
 					<Button variant="secondary" buttonText="Adjust balance" onButtonPressed={openAdjustment}/>
 				</div>
 			</div>
@@ -72,6 +76,13 @@ export function ChildPreview({child, pendingRequests, requestInProgress, onAppro
 			{showRequests && <div className="mt-4 space-y-3 border-t border-[var(--garden-border)] pt-4">
 				{pendingRequests.map(request => <div id={request._id} key={request._id} className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--garden-learn)_55%,transparent)] bg-[var(--garden-learn-soft)] p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><div data-testid={request._id} className="text-lg font-bold">Request ${request.amount}</div><div className="garden-muted">Reason: {request.reason}</div></div><div className="flex gap-2"><Button disabled={requestInProgress !== null} buttonText={requestInProgress === request._id ? "Updating…" : "Approve"} onButtonPressed={() => onApproveRequest(request)}/><Button disabled={requestInProgress !== null} variant="secondary" buttonText="Deny" onButtonPressed={() => onDenyRequest(request)}/></div></div>{requestInProgress === request._id && <p className="garden-muted mt-2 text-sm">Updating request…</p>}</div>)}
 			</div>}
+
+			{showEditAccount && <EditChildAccountDialog
+				child={child}
+				isOpen={showEditAccount}
+				onRequestClose={() => setShowEditAccount(false)}
+				onChildUpdated={onChildUpdated}
+			/>}
 		</article>
 	);
 }

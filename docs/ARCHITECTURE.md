@@ -26,6 +26,8 @@ Guardian child-dashboard mode is presentation state owned by the dashboard page.
 
 The data model centers on users, child accounts, and transactions. Usernames are protected by the unique `users_username_unique` database index. Balances are also stored directly on child accounts, while transactions provide a partial history. Simulated growth is settled lazily during authenticated account reads and before balance mutations.
 
+Guardian child-profile edits update the login identity and child-account projection in one MongoDB transaction after an ownership check. Password replacement is optional and is hashed server-side; password material is never returned to the browser. A requested balance edit is deliberately a separate audited balance-adjustment command so profile editing cannot bypass the transaction ledger.
+
 Lazy growth settlement uses no scheduler or background invocation. A request that already needs an account calculates completed 24-hour UTC periods since `balanceLastUpdated`; if at least one cent is due, the app writes one explanatory growth transaction and the resulting balance atomically. Multiple inactive days collapse into one entry, while partial days remain pending. Principal-changing commands checkpoint at the mutation time so a new principal is never applied retroactively.
 
 ## Current boundaries

@@ -1,7 +1,7 @@
 import IClient from "@models/client";
 import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
 import {Option} from "@models/option";
-import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput, UpdateChildAccountInput} from "@models/child-account";
 import {Transaction} from "@models/transaction";
 
 type DeleteChildAccountResponse = {deletedCount: number};
@@ -56,6 +56,18 @@ export default class MongoDbClient implements IClient {
         if (!response.ok) {
             const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
             throw new Error(error?.error?.message ?? "Unable to create child account");
+        }
+        return await response.json() as ChildAccount;
+    }
+
+    async updateChildAccount(childId: string, childData: UpdateChildAccountInput): Promise<ChildAccount> {
+        const response = await fetch(`/api/childaccount/${childId}`, {
+            method: "PATCH",
+            body: JSON.stringify(childData),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => null) as {error?: {message?: string}} | null;
+            throw new Error(error?.error?.message ?? "Unable to update child account");
         }
         return await response.json() as ChildAccount;
     }

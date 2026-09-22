@@ -1,6 +1,6 @@
 import IClient from '@models/client';
 import type {AuthenticatedAccount, GuardianRegistrationData, LoginData} from "@models/auth";
-import {ChildAccount, CreateChildAccountInput} from "@models/child-account";
+import {ChildAccount, CreateChildAccountInput, UpdateChildAccountInput} from "@models/child-account";
 import {IUser} from "@models/user";
 import {ApprovalStatus, Transaction} from "@models/transaction";
 import {Option} from "@models/option";
@@ -9,6 +9,7 @@ import {compare, hash} from "bcryptjs";
 import {approvePurchaseRequest} from "../domain/purchase-request";
 import {createBalanceAdjustment} from "../domain/balance-adjustment";
 import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
+import {parseUpdateChildAccount} from "../domain/child-account-profile";
 import {createGrowthAccrual, type GrowthAccrualDecision} from "../domain/growth-accrual";
 import {parseGuardianRegistration} from "../domain/guardian-registration";
 
@@ -114,6 +115,34 @@ export default class MockClient implements IClient {
         mockChildren.push(records.childAccount);
         mockRequests.push({...records.openingTransaction, _id: guid()});
         return records.childAccount;
+    }
+
+    async updateChildAccount(childId: string, childData: UpdateChildAccountInput): Promise<ChildAccount> {
+        const child = mockChildren.find(candidate => candidate._id === childId);
+        if (!child || !this.session?._id || this.session.isChildAccount || child.parentId !== this.session._id) {
+            throw new Error("Child account not found");
+        }
+
+        const update = parseUpdateChildAccount(childData);
+        if (!update) throw new Error("Enter valid child account details");
+        if (mockUsers.some(user => user._id !== childId && user.username === update.username)) {
+            throw new Error("Username is already in use");
+        }
+
+        const user = mockUsers.find(candidate => candidate._id === childId);
+        if (!user) throw new Error("Child account not found");
+
+        Object.assign(user, {
+            displayName: update.displayName,
+            username: update.username,
+            ...(update.password ? {passwordHash: await hash(update.password, 12)} : {}),
+        });
+        Object.assign(child, {
+            displayName: update.displayName,
+            username: update.username,
+            interest: update.interest,
+        });
+        return child;
     }
 
     getChildAccounts(parentId: string): Promise<ChildAccount[]|null> {

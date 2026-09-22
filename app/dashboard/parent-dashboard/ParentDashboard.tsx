@@ -55,6 +55,12 @@ export default function ParentDashboard({onViewAsChild}: ParentDashboardProps) {
 		));
 	};
 
+	const handleChildUpdated = (updatedChild: ChildAccount) => {
+		setChildAccounts(currentAccounts => currentAccounts.map(child =>
+			child._id === updatedChild._id ? updatedChild : child,
+		));
+	};
+
 	const handleApproveRequest = async (request: Transaction) => {
 		if (!request._id || requestInProgress) return;
 		setRequestInProgress(request._id);
@@ -122,6 +128,7 @@ export default function ParentDashboard({onViewAsChild}: ParentDashboardProps) {
 								onApproveRequest={handleApproveRequest}
 								onDenyRequest={handleDenyRequest}
 								onBalanceChanged={handleBalanceChanged}
+								onChildUpdated={handleChildUpdated}
 								onViewAsChild={onViewAsChild}
 							/>)}
 					</section>
