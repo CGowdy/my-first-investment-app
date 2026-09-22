@@ -7,143 +7,102 @@ import Button from "@components/button/Button";
 import Input from "@components/Input";
 
 export type ChildPreviewProps = {
-    child: ChildAccount;
-    onChildSelected: (child: ChildAccount) => void;
+	child: ChildAccount;
+	onChildSelected: (child: ChildAccount) => void;
 }
 
 export function ChildPreview({child}: ChildPreviewProps) {
-    const [loading, setLoading] = useState(true);
-    const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
-    const [loadingRequests, setLoadingRequests] = useState(true);
-    const [showRequests, setShowRequests] = useState(false);
-    const [showAdjustment, setShowAdjustment] = useState(false);
-    const [adjustment, setAdjustment] = useState(0);
-    const [adjustmentError, setAdjustmentError] = useState("");
-    const [currentBalance, setCurrentBalance] = useState(child.balance);
-    const client = useContext(ClientContext) as unknown as IClient
+	const [loading, setLoading] = useState(true);
+	const [pendingRequests, setPendingRequests] = useState<Transaction[]>([]);
+	const [loadingRequests, setLoadingRequests] = useState(true);
+	const [showRequests, setShowRequests] = useState(false);
+	const [showAdjustment, setShowAdjustment] = useState(false);
+	const [adjustment, setAdjustment] = useState(0);
+	const [adjustmentError, setAdjustmentError] = useState("");
+	const [currentBalance, setCurrentBalance] = useState(child.balance);
+	const client = useContext(ClientContext) as unknown as IClient;
 
-    useEffect(() => {
-        if (!child._id) return;
-        client.getPendingRequestsForChild(child._id).then(result => {
-            setPendingRequests(result);
-            setLoadingRequests(false);
-            setLoading(false);
-        });
-    }, [child._id, client]);
+	useEffect(() => {
+		if (!child._id) return;
+		client.getPendingRequestsForChild(child._id).then(result => {
+			setPendingRequests(result);
+			setLoadingRequests(false);
+			setLoading(false);
+		});
+	}, [child._id, client]);
 
-    const onRequestApproval = async (request: Transaction) => {
-        try {
-            setLoading(true);
-            const remainingPendingRequests = await client.approveRequest({...request, approved: ApprovalStatus.Approved});
-            const updatedChild = {...child, balance: currentBalance - request.amount};
-            setCurrentBalance(updatedChild.balance);
-            setPendingRequests(remainingPendingRequests);
-            setLoading(false);
-        } catch (error) {
-            console.log(error);
-            setLoading(false);
-        }
-    }
+	const onRequestApproval = async (request: Transaction) => {
+		try {
+			setLoading(true);
+			const remainingPendingRequests = await client.approveRequest({...request, approved: ApprovalStatus.Approved});
+			setCurrentBalance(currentBalance - request.amount);
+			setPendingRequests(remainingPendingRequests);
+			setLoading(false);
+		} catch (error) {
+			console.log(error);
+			setLoading(false);
+		}
+	};
 
-    const onRequestDenied = async (request: Transaction) => {
-        try {
-            setLoading(true);
-            const remainingPrendingRequests = await client.rejectRequest({...request, approved: ApprovalStatus.Rejected});
-            setPendingRequests(remainingPrendingRequests);
-            setLoading(false);
-        } catch (error) {
-            console.log(error);
-        }
-    }
+	const onRequestDenied = async (request: Transaction) => {
+		try {
+			setLoading(true);
+			const remainingPendingRequests = await client.rejectRequest({...request, approved: ApprovalStatus.Rejected});
+			setPendingRequests(remainingPendingRequests);
+			setLoading(false);
+		} catch (error) {
+			console.log(error);
+			setLoading(false);
+		}
+	};
 
-    const adjustBalance = async () => {
-        try {
-            if (!child._id) return;
-            setLoading(true);
-            setAdjustmentError("");
-            const newBalance = await client.adjustBalance(child._id, adjustment);
+	const adjustBalance = async () => {
+		try {
+			if (!child._id) return;
+			setLoading(true);
+			setAdjustmentError("");
+			const newBalance = await client.adjustBalance(child._id, adjustment);
+			setCurrentBalance(newBalance.balance);
+			setLoading(false);
+		} catch (error) {
+			console.log(error);
+			setAdjustmentError(error instanceof Error ? error.message : "Unable to adjust balance");
+			setLoading(false);
+		}
+	};
 
-            setCurrentBalance(newBalance.balance);
-            setLoading(false);
-        } catch (error) {
-            console.log(error);
-            setAdjustmentError(error instanceof Error ? error.message : "Unable to adjust balance");
-            setLoading(false);
-        }
-    }
+	return (
+		<article data-testid={`child-preview-${child._id}`} className={`relative overflow-hidden rounded-[1.25rem] border-2 bg-[var(--garden-surface)] p-5 ${pendingRequests.length > 0 ? "border-[color-mix(in_srgb,var(--garden-learn)_70%,transparent)]" : "border-[var(--garden-border)]"}`}>
+			{loadingRequests && <div className="garden-muted">Loading requests...</div>}
+			{loading && <div className="absolute inset-0 z-10 grid place-items-center bg-[color-mix(in_srgb,var(--garden-surface)_80%,transparent)]"><span className="rounded-full bg-[var(--garden-surface)] px-4 py-2 font-semibold">Loading…</span></div>}
 
-    return (
-        <div data-testid={`child-preview-${child._id}`} className={`relative z-10 rounded-lg pl-2 pr-0 pb-0 text-slate-900 shadow-lg dark:text-slate-100 ${pendingRequests.length === 0 ? 'bg-gray-200 ring-1 ring-emerald-700 dark:bg-slate-800' : 'bg-gray-200 ring-2 ring-blue-700 dark:bg-slate-800'}`}>
-            {/*<Button buttonText="Delete" className={'ml-4'} onButtonPressed={() => onDeletePressed(child.id)}/> to be implemented in issue #12*/}
+			<div className="grid gap-4 md:grid-cols-[minmax(190px,1.2fr)_minmax(120px,0.6fr)_auto] md:items-center">
+				<div className="flex items-center gap-3">
+					<span aria-hidden="true" className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--garden-brand-soft)] font-extrabold text-[var(--garden-brand)]">{child.displayName.slice(0, 2).toUpperCase()}</span>
+					<div><h3 className="text-lg font-bold">{child.displayName}</h3><p className="garden-muted text-sm">{child.interest}% simulated growth</p></div>
+				</div>
+				<div><span className="garden-muted text-xs font-bold">Balance</span><div className="text-2xl font-bold">$<span data-testid={`child-balance-${child._id}`}>{currentBalance}</span></div></div>
+				<div className="flex flex-wrap items-center gap-2 md:justify-end">
+					{pendingRequests.length > 0 && <button type="button" aria-expanded={showRequests} aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? "s" : ""}`} className="rounded-full bg-[var(--garden-learn-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-learn)]" onClick={() => setShowRequests(!showRequests)}><span>{pendingRequests.length} request{pendingRequests.length > 1 ? "s" : ""}</span> <span aria-hidden="true">{showRequests ? "▲" : "▼"}</span></button>}
+					{pendingRequests.length === 0 && !loadingRequests && <span className="rounded-full bg-[var(--garden-brand-soft)] px-3 py-2 text-sm font-bold text-[var(--garden-brand)]">All caught up</span>}
+					<Button variant="secondary" buttonText="add" onButtonPressed={() => setShowAdjustment(true)}/>
+					<Button variant="secondary" className="!border-[color-mix(in_srgb,var(--garden-spend)_55%,transparent)] !text-[var(--garden-spend)]" buttonText="remove" onButtonPressed={() => setShowAdjustment(true)}/>
+				</div>
+			</div>
 
-            {loadingRequests && <div>Loading requests...</div>}
+			{showAdjustment && <div className="mt-4 grid gap-3 rounded-2xl border-2 border-[color-mix(in_srgb,var(--garden-learn)_55%,transparent)] bg-[var(--garden-learn-soft)] p-4 sm:grid-cols-[auto_auto_1fr_auto] sm:items-center">
+				<Button buttonText="+" onButtonPressed={() => setAdjustment(adjustment + 1)}/>
+				<Button variant="secondary" buttonText="-" onButtonPressed={() => setAdjustment(adjustment - 1)}/>
+				<Input inputText={adjustment.toString()} onInputChanged={(newInput) => setAdjustment(Number(newInput))}/>
+				<Button variant="secondary" buttonText="Submit" onButtonPressed={adjustBalance}/>
+			</div>}
+			{adjustmentError && <p role="alert" className="mt-3 text-rose-700 dark:text-rose-300">{adjustmentError}</p>}
 
-            {loading &&
-                <div className="absolute top-0 left-0 z-10 flex h-full w-full items-center justify-center bg-white/40 dark:bg-slate-950/60">
-                    <div className="flex items-center">
-                        <span className="text-3xl mr-4">Loading</span>
-                        <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none"
-                             viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"></circle>
-                            <path className="opacity-75" fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                    </div>
-                </div>}
-
-            <div className={'flex justify-between'}>
-                <div className={'flex flex-col w-full'}>
-                    <div className={'flex flex-row justify-between'}>
-                        <div className={'flex flex-col pb-2 pt-2'}>
-                            <div className={'text-base'}>{child.displayName}</div>
-                            <div className={'font-bold text-2xl'}>$<span data-testid={`child-balance-${child._id}`}>{currentBalance}</span></div>
-                            <div className={'text-sm text-gray-400'}>{child.interest}% Interest</div>
-
-                            {pendingRequests.length > 0 &&
-                                <button
-                                     type="button"
-                                     aria-expanded={showRequests}
-                                     aria-label={`${pendingRequests.length} pending request${pendingRequests.length > 1 ? 's' : ''}`}
-                                     className={'flex h-full w-full cursor-pointer items-center rounded-none rounded-tr-lg bg-transparent text-sm font-bold text-gray-900 dark:text-slate-100'}
-                                     onClick={() => setShowRequests(!showRequests)}>
-                                    <span className={'mr-1'}>{pendingRequests.length} request{pendingRequests.length > 1 ? 's' : ''}</span>
-                                    <span aria-hidden="true">{showRequests ? '▲' : '▼'}</span>
-                                </button>}
-
-                        </div>
-                        <div className={'ml-3'}>
-                        </div>
-                        <div className={'flex flex-col overflow-clip w-20'}>
-                            <Button className={`!w-full !h-full !rounded-b-none  !rounded-l-none !rounded-tr-lg`} buttonText={'add'}
-                                           onButtonPressed={() => setShowAdjustment(true)}/>
-                            <Button className={`!bg-red-500 !w-full !h-full !rounded-br-lg  !rounded-l-none !rounded-t-none ${pendingRequests.length > 0 ? '!rounded-t-none' : ''}`}
-                                           buttonText={'remove'} onButtonPressed={() => setShowAdjustment(true)}/>
-                        </div>
-                    </div>
-
-                    {showAdjustment && <div className={`flex flex-row`}>
-                        <Button buttonText={"+"} onButtonPressed={() => setAdjustment(adjustment+1)}/>
-                        <Button className={`!bg-red-500`} buttonText={'-'} onButtonPressed={() => setAdjustment(adjustment-1)}/>
-                        <Input className={`border-1 border-black`} inputText={adjustment.toString()} onInputChanged={(newInput) => setAdjustment(Number(newInput))}/>
-                        <Button variant={'secondary'} buttonText={'Submit'} onButtonPressed={adjustBalance}/>
-                    </div>}
-                    {adjustmentError && <p role="alert" className="text-red-700">{adjustmentError}</p>}
-
-                    {!loadingRequests && showRequests && pendingRequests?.map((request: Transaction) => (
-                        <div id={request._id} key={request._id} className={'my-4 border-t border-gray-700'}>
-                            <div data-testid={request._id}>Request ${request.amount}</div>
-                            <div>Reason: {request.reason}</div>
-                            <div className={'inline-flex'}>
-                                <Button buttonText="Approve" onButtonPressed={() => onRequestApproval(request)}/>
-                                <Button variant={"secondary"} buttonText={"Deny"} className={"ml-4"} onButtonPressed={() => onRequestDenied(request)}/>
-                            </div>
-                        </div>
-                    ))}
-
-                </div>
-            </div>
-        </div>
-    )
+			{!loadingRequests && showRequests && <div className="mt-4 space-y-3 border-t border-[var(--garden-border)] pt-4">
+				{pendingRequests.map((request: Transaction) => <div id={request._id} key={request._id} className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--garden-learn)_55%,transparent)] bg-[var(--garden-learn-soft)] p-4">
+					<div className="flex flex-wrap items-start justify-between gap-3"><div><div data-testid={request._id} className="text-lg font-bold">Request ${request.amount}</div><div className="garden-muted">Reason: {request.reason}</div></div><div className="flex gap-2"><Button buttonText="Approve" onButtonPressed={() => onRequestApproval(request)}/><Button variant="secondary" buttonText="Deny" onButtonPressed={() => onRequestDenied(request)}/></div></div>
+				</div>)}
+			</div>}
+		</article>
+	);
 }
-

@@ -30,18 +30,50 @@
 
 :root {
   color-scheme: light;
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 248, 250, 252;
+  --foreground-rgb: 23, 52, 43;
+  --background-start-rgb: 244, 248, 245;
+  --background-end-rgb: 244, 248, 245;
+  --garden-page: #f4f8f5;
+  --garden-surface: #ffffff;
+  --garden-surface-soft: #eaf2ed;
+  --garden-text: #17342b;
+  --garden-muted: #587067;
+  --garden-border: #cddbd3;
+  --garden-brand: #0f6b4d;
+  --garden-brand-soft: #e0f2e9;
+  --garden-action: #0f6b4d;
+  --garden-action-text: #ffffff;
+  --garden-save: #245fb8;
+  --garden-save-soft: #e9f1ff;
+  --garden-spend: #a84612;
+  --garden-spend-soft: #fff0e7;
+  --garden-learn: #8a6200;
+  --garden-learn-soft: #fff4cf;
   --hover-hsl: hsl(0, 0%, 20%);
   --primary-hsl: hsl(0, 0%, 50%);
 }
 
 :root.dark {
   color-scheme: dark;
-  --foreground-rgb: 226, 232, 240;
-  --background-start-rgb: 15, 23, 42;
-  --background-end-rgb: 15, 23, 42;
+  --foreground-rgb: 241, 248, 245;
+  --background-start-rgb: 11, 23, 21;
+  --background-end-rgb: 11, 23, 21;
+  --garden-page: #0b1715;
+  --garden-surface: #142522;
+  --garden-surface-soft: #18372f;
+  --garden-text: #f1f8f5;
+  --garden-muted: #aec1b9;
+  --garden-border: #375048;
+  --garden-brand: #87bfa5;
+  --garden-brand-soft: #18372f;
+  --garden-action: #176b50;
+  --garden-action-text: #f1f8f5;
+  --garden-save: #7db2ff;
+  --garden-save-soft: #172d4f;
+  --garden-spend: #ffaa73;
+  --garden-spend-soft: #48291b;
+  --garden-learn: #ffd166;
+  --garden-learn-soft: #453817;
 }
 
 body {
@@ -53,4 +85,25 @@ body {
 
 h1{
   font-size: 32px;
+}
+
+@layer components {
+  .garden-card {
+    border: 1px solid var(--garden-border);
+    border-radius: 1.375rem;
+    background: var(--garden-surface);
+    color: var(--garden-text);
+  }
+
+  .garden-kicker {
+    color: var(--garden-brand);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .garden-muted {
+    color: var(--garden-muted);
+  }
 }

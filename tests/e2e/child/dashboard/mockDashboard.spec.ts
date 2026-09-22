@@ -15,7 +15,7 @@ test.describe('Mock Dashboard', ()=>{
 
     test('should have Account Balance Section', async ({page}) => {
         await expect(page.getByText('Account Balance')).toBeVisible();
-        await expect (page.getByText(`$${accountBalance.toFixed(2)}`)).toBeVisible();
+		await expect(page.getByTestId('account-balance')).toHaveText(accountBalance.toFixed(2));
         await expect(page.getByText('Your current balance is')).toBeVisible();
         await expect(page.getByText('Today your money made you')).toBeVisible();
     });

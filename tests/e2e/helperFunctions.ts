@@ -14,7 +14,9 @@ export const performLogin = async (page: Page, username:string, password:string)
     if (currentUrl === 'about:blank' || new URL(currentUrl).origin !== expectedOrigin) {
         await page.goto('/');
     }
-    await page.getByRole('link', { name: 'Dashboard' }).click();
+	if (new URL(page.url()).pathname !== '/dashboard') {
+		await page.getByRole('link', {name: 'My First Investment'}).click();
+	}
     await page.getByLabel('Username').click();
     await page.getByLabel('Username').fill(username);
     await page.getByLabel('Password').click();

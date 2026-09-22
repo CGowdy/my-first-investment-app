@@ -12,7 +12,7 @@ it('should render the component', () => {
 
 it('uses readable colors on light input surfaces', () => {
     render(<Input onInputChanged={() => undefined} inputText="readable"/>);
-    expect(screen.getByDisplayValue('readable')).toHaveClass('bg-white', 'text-slate-900');
+	expect(screen.getByDisplayValue('readable')).toHaveClass('bg-[var(--garden-surface)]', 'text-[var(--garden-text)]');
 });
 
 it('should render a header if one is provided',() =>{

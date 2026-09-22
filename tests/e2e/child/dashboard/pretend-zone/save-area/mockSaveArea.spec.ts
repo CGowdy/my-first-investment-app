@@ -15,11 +15,11 @@ test.describe('Mock Save Area', ()=>{
         await expect(ifISaveInput).toBeVisible();
         expect(await ifISaveInput.inputValue()).toBe('');
 
-        await expect(page.getByTestId('save-resulting-balance')).toHaveText(`$${accountBalance}`);
+		await expect(page.getByTestId('save-resulting-balance')).toHaveText(`$${accountBalance.toFixed(2)}`);
     });
 
     test('should update when entering a value', async ({page}) => {
         await ifISaveInput.fill('15');
-        await expect(page.getByTestId('save-resulting-balance')).toHaveText(`$${accountBalance + 15}`);
+		await expect(page.getByTestId('save-resulting-balance')).toHaveText(`$${(accountBalance + 15).toFixed(2)}`);
     });
 });

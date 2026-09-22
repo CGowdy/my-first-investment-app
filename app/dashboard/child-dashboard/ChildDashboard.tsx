@@ -21,15 +21,15 @@ type ProjectionResultProps = {
 };
 
 const projectionToneClasses = {
-    spend: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200',
-    save: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-200',
+	spend: 'border-[color-mix(in_srgb,var(--garden-spend)_45%,transparent)] bg-[var(--garden-spend-soft)] text-[var(--garden-spend)]',
+	save: 'border-[color-mix(in_srgb,var(--garden-save)_45%,transparent)] bg-[var(--garden-save-soft)] text-[var(--garden-save)]',
 };
 
 function ProjectionResult({label, value, testId, tone}: ProjectionResultProps) {
     return (
-        <div className={`rounded-lg border px-3 py-2 ${projectionToneClasses[tone]}`}>
-            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">{label}</div>
-            <output data-testid={testId} className="block text-lg font-semibold">${value}</output>
+		<div className={`flex items-center justify-between gap-3 border-t px-1 py-3 ${projectionToneClasses[tone]}`}>
+			<div className="text-sm opacity-80">{label}</div>
+			<output data-testid={testId} className="block text-lg font-bold">${value}</output>
         </div>
     );
 }
@@ -95,73 +95,67 @@ export default function ChildDashboard() {
         return (childAccount.balance - pendingRequestTotal).toFixed(2);
     }
 
-    return (
-        <div className={'w-full flex-col'}>
-            {!childAccount && <div>Loading...</div>}
-            {childAccount && childAccount.balance &&
-                <div>
-                <h1>Hello {childAccount.displayName}</h1>
-                <br/>
-                <div className="prose mb-2 max-w-none rounded-2xl bg-white px-4 py-5 text-lg font-bold text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6">
-                    <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Account Balance</h2>
-                    {pendingRequests?.length > 0
-                        ? <div>
-                            <div>Your current balance is</div>
-                            <div>$<span data-testid={'account-balance-diff'}>{getReducedBalance()}</span> ($<span data-testid='account-balance'>{childAccount.balance.toFixed(2)}</span>)</div>
-                        </div>
-                        : <div>
-                            <div>Your current balance is</div>
-                            <div>$<span data-testid={'account-balance'}>{childAccount.balance.toFixed(2)}</span></div>
-                        </div>}
+	return (
+		<div className="w-full text-[var(--garden-text)]">
+			{!childAccount && <div>Loading...</div>}
+			{childAccount && <div className="space-y-5">
+				<header className="grid items-center gap-5 md:grid-cols-[1fr_auto]">
+					<div>
+						<p className="garden-kicker">My money</p>
+						<h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Hello {childAccount.displayName}</h1>
+						<p className="garden-muted mt-2">Explore a choice, make a plan, and ask when you’re ready.</p>
+					</div>
+					<section aria-labelledby="account-balance-heading" className="rounded-[1.625rem] border-[3px] border-[color-mix(in_srgb,var(--garden-brand)_55%,transparent)] bg-[var(--garden-brand-soft)] px-6 py-5 md:min-w-64">
+						<h2 id="account-balance-heading" className="garden-kicker">Account Balance</h2>
+						<div className="text-4xl font-extrabold tracking-tight">$<span data-testid="account-balance">{childAccount.balance.toFixed(2)}</span></div>
+						<div className="garden-muted mt-1 text-sm">Your current balance is <strong>${childAccount.balance.toFixed(2)}</strong></div>
+						<div className="mt-2 text-sm">Today your money made you <strong className="text-[var(--garden-learn)]">${dailyEarnings.toFixed(2)}</strong></div>
+					</section>
+				</header>
 
-                    <div className={'mt-4'}>Today your money made you</div>
-                    <div>${dailyEarnings.toFixed(2)} </div>
-                </div>
-                <div className={'prose mb-2 flex max-w-none flex-col rounded-2xl bg-white px-4 py-5 text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6'}>
-                    <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Pretend Zone</h2>
-                    <p className={'text-sm'}>This area can be used to pretend you spent some of your money or put more money in.</p>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                        <section aria-labelledby="spend-scenario-heading" className="rounded-xl border border-amber-300 bg-amber-50/50 p-3 dark:border-amber-400/30 dark:bg-amber-400/5">
-                            <h3 id="spend-scenario-heading" className="mb-3 text-base font-semibold text-amber-800 dark:text-amber-200">Spend scenario</h3>
-                            <div className="space-y-3">
-                                <LabelledInput name="if-i-spend" label="If I spend" inputText={pretendSpent} onInputChanged={setPretendSpent}
-                                               headerDisplay="$" placeholder="Enter amount here"/>
-                                <ProjectionResult label="Then my account will have" value={(childAccount.balance - Number(pretendSpent)).toString()}
-                                                  testId="spend-resulting-balance" tone="spend"/>
-                                <ProjectionResult label="Every day my money would create"
-                                                  value={calculateDailyEarnings(childAccount.balance - Number(pretendSpent), childAccount.interest / 100).toFixed(2)}
-                                                  testId="spend-daily-growth" tone="spend"/>
-                            </div>
-                        </section>
-                        <section aria-labelledby="save-scenario-heading" className="rounded-xl border border-sky-300 bg-sky-50/50 p-3 dark:border-sky-400/30 dark:bg-sky-400/5">
-                            <h3 id="save-scenario-heading" className="mb-3 text-base font-semibold text-sky-800 dark:text-sky-200">Save scenario</h3>
-                            <div className="space-y-3">
-                                <LabelledInput name="if-i-save" label="If I save" inputText={pretendAdded} onInputChanged={setPretendAdded}
-                                               headerDisplay="$" placeholder="Enter amount here"/>
-                                <ProjectionResult label="Then my account will have" value={(childAccount.balance + Number(pretendAdded)).toString()}
-                                                  testId="save-resulting-balance" tone="save"/>
-                                <ProjectionResult label="Every day my money would create"
-                                                  value={calculateDailyEarnings(childAccount.balance + Number(pretendAdded), childAccount.interest / 100).toFixed(2)}
-                                                  testId="save-daily-growth" tone="save"/>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-                <div className={'prose flex max-w-none flex-col rounded-2xl bg-white px-4 py-5 text-slate-900 dark:prose-invert dark:bg-slate-800 dark:text-slate-100 sm:px-6'}>
-                    <h2 className={'border-b border-gray-200 pb-2 font-semibold leading-6 text-gray-900 dark:border-slate-600 dark:text-slate-100'}>Spend Money Request</h2>
-                    <div className={'flex w-full flex-col'}>
-                        <LabelledInput name='i-want-to-spend' className={"mx-1 w-auto"} label={"I want to spend"} inputText={requestAmount.toString()} onInputChanged={setRequestAmount}
-                                       headerDisplay={"$"} placeholder={"Enter amount"}/>
-                        <LabelledInput name='i-want-to-spend-this-money-because' className={"mx-1 mb-2"} label={"I want to spend this money because"} inputText={requestReason}
-                                       onInputChanged={setRequestReason}
-                                       placeholder={"I want a new toy"}/>
-                        <Button buttonText={'Request'} onButtonPressed={onRequestSubmit} className={'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-sm'}/>
-                        {error && <p className={'text-rose-600'}>{error}</p>}
-                    </div>
+				{pendingRequests.length > 0 && <div className="garden-card flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+					<div><strong>{pendingRequests.length} request{pendingRequests.length > 1 ? "s are" : " is"} waiting for your parent</strong><p className="garden-muted text-sm">Available after requests</p></div>
+					<div className="text-xl font-bold">$<span data-testid="account-balance-diff">{getReducedBalance()}</span> <span className="garden-muted text-sm font-medium">(${childAccount.balance.toFixed(2)})</span></div>
+				</div>}
 
-                </div>
-            </div>
-            }
-        </div>
-    )
+				<section className="garden-card grid gap-6 border-[3px] p-6 lg:grid-cols-[0.7fr_1.3fr]">
+					<div className="flex flex-col items-start">
+						<span aria-hidden="true" className="mb-5 grid h-12 w-12 place-items-center rounded-full bg-[var(--garden-action)] text-xl font-black text-[var(--garden-action-text)]">?</span>
+						<p className="garden-kicker">Learning playground</p>
+						<h2 className="text-3xl font-semibold tracking-tight">Pretend Zone</h2>
+						<p className="garden-muted mt-2">Try a money choice safely. Nothing here changes your real pretend balance.</p>
+						<span className="mt-5 rounded-full bg-[var(--garden-brand-soft)] px-3 py-2 text-xs font-bold text-[var(--garden-brand)] lg:mt-auto">Safe to explore</span>
+					</div>
+					<div className="grid gap-4 md:grid-cols-2">
+						<section aria-labelledby="spend-scenario-heading" className="rounded-[1.5rem] border-[3px] border-[color-mix(in_srgb,var(--garden-spend)_55%,transparent)] bg-[var(--garden-spend-soft)] p-5">
+							<h3 id="spend-scenario-heading" className="mb-4 text-lg font-bold text-[var(--garden-spend)]">Spend scenario</h3>
+							<div className="space-y-1">
+								<LabelledInput name="if-i-spend" label="If I spend" inputText={pretendSpent} onInputChanged={setPretendSpent} headerDisplay="$" placeholder="Enter amount here"/>
+								<ProjectionResult label="Then my account will have" value={(childAccount.balance - Number(pretendSpent)).toFixed(2)} testId="spend-resulting-balance" tone="spend"/>
+								<ProjectionResult label="Daily pretend growth" value={calculateDailyEarnings(childAccount.balance - Number(pretendSpent), childAccount.interest / 100).toFixed(2)} testId="spend-daily-growth" tone="spend"/>
+							</div>
+						</section>
+						<section aria-labelledby="save-scenario-heading" className="rounded-[1.5rem] border-[3px] border-[color-mix(in_srgb,var(--garden-save)_55%,transparent)] bg-[var(--garden-save-soft)] p-5">
+							<h3 id="save-scenario-heading" className="mb-4 text-lg font-bold text-[var(--garden-save)]">Save scenario</h3>
+							<div className="space-y-1">
+								<LabelledInput name="if-i-save" label="If I save" inputText={pretendAdded} onInputChanged={setPretendAdded} headerDisplay="$" placeholder="Enter amount here"/>
+								<ProjectionResult label="Then my account will have" value={(childAccount.balance + Number(pretendAdded)).toFixed(2)} testId="save-resulting-balance" tone="save"/>
+								<ProjectionResult label="Daily pretend growth" value={calculateDailyEarnings(childAccount.balance + Number(pretendAdded), childAccount.interest / 100).toFixed(2)} testId="save-daily-growth" tone="save"/>
+							</div>
+						</section>
+					</div>
+				</section>
+
+				<section className="grid gap-6 rounded-[1.625rem] border-[3px] border-[color-mix(in_srgb,var(--garden-learn)_65%,transparent)] bg-[var(--garden-learn-soft)] p-6 lg:grid-cols-[0.65fr_1.35fr] lg:items-center">
+					<div><p className="garden-kicker">Ready to ask?</p><h2 className="text-2xl font-semibold">Spend Money Request</h2><p className="garden-muted mt-2">Tell your parent what you want and why.</p></div>
+					<div className="flex w-full flex-col gap-3">
+						<LabelledInput name="i-want-to-spend" label="I want to spend" inputText={requestAmount} onInputChanged={setRequestAmount} headerDisplay="$" placeholder="Enter amount"/>
+						<LabelledInput name="i-want-to-spend-this-money-because" label="I want to spend this money because" inputText={requestReason} onInputChanged={setRequestReason} placeholder="I want a new toy"/>
+						<Button buttonText="Request" onButtonPressed={onRequestSubmit}/>
+						{error && <p role="alert" className="text-rose-600 dark:text-rose-300">{error}</p>}
+					</div>
+				</section>
+			</div>}
+		</div>
+	);
 }
