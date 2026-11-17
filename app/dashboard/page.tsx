@@ -6,14 +6,22 @@ import ParentDashboard from "./parent-dashboard/ParentDashboard";
 import {AuthContext} from "@contexts/AuthContext";
 import {ChildAccount} from "@models/child-account";
 import Button from "@components/button/Button";
-import {ClientModeContext} from "@contexts/ClientContext";
+import {ClientContext, ClientModeContext} from "@contexts/ClientContext";
 import {ClientType} from "../enums/clientType";
+import type IClient from "@models/client";
 
 export default function Dashboard() {
-	const {user, resetDemo} = useContext(AuthContext)!;
+	const {user} = useContext(AuthContext)!;
+	const client = useContext(ClientContext);
 	const demoEnabled = useContext(ClientModeContext) === ClientType.Mock;
 	const [preview, setPreview] = useState<{guardianId: string; child: ChildAccount} | null>(null);
 	const previewChild = preview && preview.guardianId === user?._id ? preview.child : null;
+	const resetDemo = async () => {
+		if (client && "resetDemo" in client) {
+			await (client as IClient & {resetDemo: () => Promise<void>}).resetDemo();
+		}
+		window.location.assign("/dashboard");
+	};
 
 	const renderUserStatus = user
 	?	<div className={"mx-2 lg:mx-0 lg:w-full"}>

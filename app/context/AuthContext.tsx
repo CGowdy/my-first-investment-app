@@ -10,7 +10,6 @@ export const AuthContext = createContext<{
     login: (userData: LoginData) => Promise<boolean>;
     register: (registration: GuardianRegistrationData) => Promise<RegistrationResult>;
     logout: () => Promise<void>;
-    resetDemo: () => Promise<void>;
     user: AuthenticatedAccount | null;
 } | null>(null);
 
@@ -50,13 +49,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({children})
         if (authOperation.current === operation) setUser(null);
     };
 
-    const resetDemo = async () => {
-        const operation = ++authOperation.current;
-        if (!clientContext.resetDemo) return;
-        await clientContext.resetDemo();
-        if (authOperation.current === operation) setUser(null);
-    };
-
     const register = async (registration: GuardianRegistrationData): Promise<RegistrationResult> => {
         const operation = ++authOperation.current;
         try {
@@ -72,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({children})
         }
     };
     return (
-        <AuthContext.Provider value={{login, register, logout, resetDemo, user}}>
+        <AuthContext.Provider value={{login, register, logout, user}}>
             {children}
         </AuthContext.Provider>
     );

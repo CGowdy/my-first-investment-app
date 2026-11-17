@@ -56,7 +56,7 @@ The mock accounts currently defined in `app/clients/mockClient.ts` are:
 | Parent manual tester | `test-adult` | `test-pass-123` |
 | Child manual tester | `test-child` | `test-pass-123` |
 
-These are public development fixtures. The portfolio demo exposes one-click entry for `parent1` and `child1`; they are not credentials suitable for a Mongo-backed environment.
+These are public development fixtures. The portfolio demo uses separate `demo-parent` and `demo-maya` fixtures behind its one-click entry; none of these accounts are credentials suitable for a Mongo-backed environment.
 
 Guardian accounts can also be created from the dashboard sign-in card. A signed-in guardian creates child access from **Create Child Account**, which keeps the child linked to the correct family. To create or reset the same `test-adult` and `test-child` fixtures in the configured MongoDB development database, run:
 

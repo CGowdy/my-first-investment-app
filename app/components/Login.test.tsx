@@ -12,7 +12,6 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: jest.fn(),
-            resetDemo: jest.fn(),
             user: null,
         };
 
@@ -37,7 +36,6 @@ describe('Login', () => {
             login: jest.fn(),
             register: mockRegister,
             logout: jest.fn(),
-            resetDemo: jest.fn(),
             user: null,
         };
 
@@ -70,7 +68,6 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: mockLogout,
-            resetDemo: jest.fn(),
             user: mockUser
         };
 
@@ -104,7 +101,6 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: mockLogout,
-            resetDemo: jest.fn(),
             user: mockUser
         };
 
@@ -138,7 +134,6 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: mockLogout,
-            resetDemo: jest.fn(),
             user: mockUser
         };
 
