@@ -10,6 +10,12 @@ import {ClientContext, ClientModeContext} from "@contexts/ClientContext";
 import {ClientType} from "../enums/clientType";
 import type IClient from "@models/client";
 
+type ResettableDemoClient = IClient & {resetDemo: () => Promise<void>};
+
+function canResetDemo(client: IClient | null): client is ResettableDemoClient {
+	return Boolean(client && typeof (client as Partial<ResettableDemoClient>).resetDemo === "function");
+}
+
 export default function Dashboard() {
 	const {user} = useContext(AuthContext)!;
 	const client = useContext(ClientContext);
@@ -17,9 +23,7 @@ export default function Dashboard() {
 	const [preview, setPreview] = useState<{guardianId: string; child: ChildAccount} | null>(null);
 	const previewChild = preview && preview.guardianId === user?._id ? preview.child : null;
 	const resetDemo = async () => {
-		if (client && "resetDemo" in client) {
-			await (client as IClient & {resetDemo: () => Promise<void>}).resetDemo();
-		}
+		if (canResetDemo(client)) await client.resetDemo();
 		window.location.assign("/dashboard");
 	};
 
