@@ -10,6 +10,8 @@ This is an early Next.js prototype, not a production financial or child-account 
 
 ## Public portfolio demo
 
+[Open the live demo](https://my-first-investment-app.vercel.app)
+
 The public demo runs with `ENVIRONMENT=mock`. Visitors can enter a fictional parent or child experience with one click, and changes are stored only in that browser tab. Refreshing preserves the visitor's demo session; **Reset demo** restores the original fictional family. The deployed demo must not receive MongoDB credentials or connect to real family data.
 
 See:
