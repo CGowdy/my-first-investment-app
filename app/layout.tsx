@@ -24,8 +24,8 @@ const themeBootstrapScript = `
 const inter = Inter({subsets: ["latin"]});
 
 export const metadata: Metadata = {
-	title: "My First Investment App",
-	description: "Kids 'invest', parents save, everyone wins!",
+	title: "My First Investment | Family Money Learning",
+	description: "A safe family simulator for practicing saving, budgeting, compound growth, and thoughtful spending—without real money.",
 };
 
 export default function RootLayout({children}: { children: React.ReactNode }) {

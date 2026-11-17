@@ -13,7 +13,7 @@ import {createBalanceAdjustment} from "../domain/balance-adjustment";
 import {createChildAccountRecords, parseCreateChildAccount} from "../domain/child-account-provisioning";
 import {applyChildAccountProfileUpdate, parseUpdateChildAccount} from "../domain/child-account-profile";
 import {buildChildReport} from "../domain/child-report";
-import {createGrowthAccrual, type GrowthAccrualDecision} from "../domain/growth-accrual";
+import {createGrowthAccrual, GROWTH_ACTOR_ID, type GrowthAccrualDecision} from "../domain/growth-accrual";
 import {parseGuardianRegistration} from "../domain/guardian-registration";
 
 
@@ -21,21 +21,98 @@ type MockUser = IUser & {passwordHash: string};
 
 const mockPasswordHash = "$2b$12$198GTcO3AK1lq.dt7ZNZV.gdHaOlhOB23msT2Ga0MwALWj2WhdDFm";
 const manualTestPasswordHash = "$2b$12$5mTxvwSKsTjEB1FtLcp.EOy5F4OKTNqCVDfXaD5p0MT9/EEtMO.Mu";
+const demoStateStorageKey = "my-first-investment-demo-state-v2";
+const demoSessionStorageKey = "my-first-investment-demo-session-v2";
 
-export const mockChildren: ChildAccount[] = [
-    {_id: "2", username: 'child1', displayName: 'Child 1', parentId: "1", balance: 250, balanceLastUpdated: new Date(), interest: 12},
-    {_id: "123", username: 'child2', displayName: 'Child 2', parentId: "1", balance: 1150, balanceLastUpdated: new Date(), interest: 12},
-    {_id: "manual-child", username: 'test-child', displayName: 'Test Child', parentId: "manual-parent", balance: 100, balanceLastUpdated: new Date(), interest: 5},
-];
-export const mockUsers: MockUser[] = [
-    {_id: "1", username: 'parent1', passwordHash: mockPasswordHash, displayName: 'Parent One'},
-    {_id: "2", username: 'child1', passwordHash: mockPasswordHash, displayName: 'Child 1', isChildAccount: true},
-    {_id: "123", username: 'child2', passwordHash: mockPasswordHash, displayName: 'Child 2', isChildAccount: true},
-    {_id: "manual-parent", username: 'test-adult', passwordHash: manualTestPasswordHash, displayName: 'Test Adult', isChildAccount: false},
-    {_id: "manual-child", username: 'test-child', passwordHash: manualTestPasswordHash, displayName: 'Test Child', isChildAccount: true},
-];
+type MockState = {
+    users: MockUser[];
+    children: ChildAccount[];
+    requests: Transaction[];
+};
 
-export const mockRequests: Transaction[] = []
+function createInitialState(): MockState {
+    const now = Date.now();
+    return {
+        children: [
+            {_id: "2", username: 'child1', displayName: 'Child 1', parentId: "1", balance: 250, balanceLastUpdated: new Date(), interest: 12},
+            {_id: "123", username: 'child2', displayName: 'Child 2', parentId: "1", balance: 1150, balanceLastUpdated: new Date(), interest: 12},
+            {_id: "manual-child", username: 'test-child', displayName: 'Test Child', parentId: "manual-parent", balance: 100, balanceLastUpdated: new Date(), interest: 5},
+            {_id: "demo-maya", username: 'demo-maya', displayName: 'Maya', parentId: "demo-parent", balance: 250, balanceLastUpdated: new Date(), interest: 12},
+            {_id: "demo-theo", username: 'demo-theo', displayName: 'Theo', parentId: "demo-parent", balance: 1150, balanceLastUpdated: new Date(), interest: 7},
+        ],
+        users: [
+            {_id: "1", username: 'parent1', passwordHash: mockPasswordHash, displayName: 'Parent One'},
+            {_id: "2", username: 'child1', passwordHash: mockPasswordHash, displayName: 'Child 1', isChildAccount: true},
+            {_id: "123", username: 'child2', passwordHash: mockPasswordHash, displayName: 'Child 2', isChildAccount: true},
+            {_id: "manual-parent", username: 'test-adult', passwordHash: manualTestPasswordHash, displayName: 'Test Adult', isChildAccount: false},
+            {_id: "manual-child", username: 'test-child', passwordHash: manualTestPasswordHash, displayName: 'Test Child', isChildAccount: true},
+            {_id: "demo-parent", username: 'demo-parent', passwordHash: mockPasswordHash, displayName: 'Jordan'},
+            {_id: "demo-maya", username: 'demo-maya', passwordHash: mockPasswordHash, displayName: 'Maya', isChildAccount: true},
+            {_id: "demo-theo", username: 'demo-theo', passwordHash: mockPasswordHash, displayName: 'Theo', isChildAccount: true},
+        ],
+        requests: [
+            {_id: "demo-pending-maya", childId: "demo-maya", amount: 24.50, reason: "A family pass for the science museum", approved: ApprovalStatus.Pending, date: new Date(now - 3_600_000), actorId: "demo-maya"},
+            {_id: "demo-pending-theo", childId: "demo-theo", amount: 39, reason: "A new skateboard helmet", approved: ApprovalStatus.Pending, date: new Date(now - 86_400_000), actorId: "demo-theo"},
+            {_id: "demo-growth-maya", childId: "demo-maya", amount: 2.68, originalBalance: 275.32, finalBalance: 278, reason: "Simulated growth: 30 days at 12% annual", approved: ApprovalStatus.AdminApproved, date: new Date(now - 8 * 86_400_000), actorId: GROWTH_ACTOR_ID},
+            {_id: "demo-spending-maya", childId: "demo-maya", amount: 28, originalBalance: 278, finalBalance: 250, reason: "Art supplies for a weekend project", approved: ApprovalStatus.Approved, approvedAt: new Date(now - 6 * 86_400_000), date: new Date(now - 6 * 86_400_000), actorId: "demo-parent"},
+            {_id: "demo-growth-theo", childId: "demo-theo", amount: 13.13, originalBalance: 1136.87, finalBalance: 1150, reason: "Simulated growth: 60 days at 7% annual", approved: ApprovalStatus.AdminApproved, date: new Date(now - 10 * 86_400_000), actorId: GROWTH_ACTOR_ID},
+        ],
+    };
+}
+
+function storage(): Storage | null {
+    if (process.env.NODE_ENV === "test" || typeof window === "undefined") return null;
+    return window.sessionStorage;
+}
+
+function loadStoredState(): MockState | null {
+    try {
+        const rawState = storage()?.getItem(demoStateStorageKey);
+        if (!rawState) return null;
+        const parsed = JSON.parse(rawState) as MockState;
+        parsed.children.forEach(child => child.balanceLastUpdated = new Date(child.balanceLastUpdated));
+        parsed.requests.forEach(request => {
+            request.date = new Date(request.date);
+            if (request.approvedAt) request.approvedAt = new Date(request.approvedAt);
+        });
+        return parsed;
+    } catch {
+        return null;
+    }
+}
+
+const initialState = loadStoredState() ?? createInitialState();
+
+export const mockChildren: ChildAccount[] = initialState.children;
+export const mockUsers: MockUser[] = initialState.users;
+export const mockRequests: Transaction[] = initialState.requests;
+
+function persistMockState(): void {
+    try {
+        storage()?.setItem(demoStateStorageKey, JSON.stringify({users: mockUsers, children: mockChildren, requests: mockRequests}));
+    } catch {}
+}
+
+function persistSession(session: AuthenticatedAccount | null): void {
+    try {
+        if (session) storage()?.setItem(demoSessionStorageKey, JSON.stringify(session));
+        else storage()?.removeItem(demoSessionStorageKey);
+    } catch {}
+}
+
+function loadStoredSession(): AuthenticatedAccount | null {
+    try {
+        const rawSession = storage()?.getItem(demoSessionStorageKey);
+        if (!rawSession) return null;
+        const session = JSON.parse(rawSession) as AuthenticatedAccount;
+        if ("balanceLastUpdated" in session && session.balanceLastUpdated) {
+            session.balanceLastUpdated = new Date(session.balanceLastUpdated);
+        }
+        return session;
+    } catch {
+        return null;
+    }
+}
 
 function settleMockChildGrowth(child: ChildAccount, asOf: Date, checkpointIfZero = false): ChildAccount {
     const decision = createGrowthAccrual(child, asOf, {checkpointIfZero});
@@ -45,11 +122,12 @@ function settleMockChildGrowth(child: ChildAccount, asOf: Date, checkpointIfZero
 function applyMockGrowthDecision(child: ChildAccount, decision: GrowthAccrualDecision): ChildAccount {
     if (decision.account !== child) Object.assign(child, decision.account);
     if (decision.transaction) mockRequests.push({...decision.transaction, _id: guid()});
+    persistMockState();
     return child;
 }
 
 export default class MockClient implements IClient {
-    private session: AuthenticatedAccount | null = null;
+    private session: AuthenticatedAccount | null = loadStoredSession();
 
     async registerGuardian(value: GuardianRegistrationData): Promise<AuthenticatedAccount> {
         const registration = parseGuardianRegistration(value);
@@ -66,8 +144,10 @@ export default class MockClient implements IClient {
             isChildAccount: false,
         };
         mockUsers.push(guardian);
+        persistMockState();
         const {passwordHash: _passwordHash, ...safeAccount} = guardian;
         this.session = safeAccount;
+        persistSession(this.session);
         return safeAccount;
     }
 
@@ -79,6 +159,7 @@ export default class MockClient implements IClient {
         const authenticated = {...user, ...child};
         const {passwordHash: _passwordHash, ...safeAccount} = authenticated;
         this.session = safeAccount;
+        persistSession(this.session);
         return this.session;
     }
 
@@ -92,6 +173,20 @@ export default class MockClient implements IClient {
 
     logout(): Promise<void> {
         this.session = null;
+        persistSession(null);
+        return Promise.resolve();
+    }
+
+    resetDemo(): Promise<void> {
+        const resetState = createInitialState();
+        mockUsers.splice(0, mockUsers.length, ...resetState.users);
+        mockChildren.splice(0, mockChildren.length, ...resetState.children);
+        mockRequests.splice(0, mockRequests.length, ...resetState.requests);
+        this.session = null;
+        try {
+            storage()?.removeItem(demoStateStorageKey);
+            storage()?.removeItem(demoSessionStorageKey);
+        } catch {}
         return Promise.resolve();
     }
 
@@ -117,6 +212,7 @@ export default class MockClient implements IClient {
         mockUsers.push(records.user);
         mockChildren.push(records.childAccount);
         mockRequests.push({...records.openingTransaction, _id: guid()});
+        persistMockState();
         return records.childAccount;
     }
 
@@ -142,6 +238,7 @@ export default class MockClient implements IClient {
         });
         const settledChild = settleMockChildGrowth(child, new Date(), true);
         Object.assign(child, applyChildAccountProfileUpdate(settledChild, update));
+        persistMockState();
         return child;
     }
 
@@ -154,6 +251,7 @@ export default class MockClient implements IClient {
     deleteChildAccount(childId: string): Promise<void> {
         const userIndex = mockUsers.findIndex(user => user._id === childId);
         mockUsers.splice(userIndex, 1);
+        persistMockState();
         return Promise.resolve();
     }
 
@@ -188,6 +286,7 @@ export default class MockClient implements IClient {
 				newRequest._id ??= guid();
 				newRequest.actorId = this.session!._id;
 				mockRequests.push(newRequest);
+                persistMockState();
                 resolve(mockRequests.filter(request => mockChildren.filter(child => newRequest.childId === child._id).map(child => child._id).includes(request.childId)));
             } else {
 				reject(new Error('Child not found'))
@@ -221,6 +320,7 @@ export default class MockClient implements IClient {
             applyMockGrowthDecision(child, growth);
             Object.assign(transactionToApprove, decision.transaction);
             child.balance = decision.balance;
+            persistMockState();
             //Return the updated mockRequests array
             const parentId = mockChildren.find(child => child._id === transaction.childId)?.parentId;
             resolve(mockRequests.filter(request => mockChildren.filter(child => child.parentId === parentId).map(child => child._id).includes(request.childId) && request.approved === ApprovalStatus.Pending));
@@ -237,6 +337,7 @@ export default class MockClient implements IClient {
             //Otherwise remove it from the mockRequests array
             const transactionToReject = mockRequests[transactionIndex];
             transactionToReject.approved = ApprovalStatus.Rejected;
+            persistMockState();
             //Return the updated mockRequests array
             const parentId = mockChildren.find(child => child._id === transaction.childId)?.parentId;
             resolve(mockRequests.filter(request => mockChildren.filter(child => child.parentId === parentId).map(child => child._id).includes(request.childId) && request.approved === ApprovalStatus.Pending));
@@ -271,6 +372,7 @@ export default class MockClient implements IClient {
             applyMockGrowthDecision(child, growth);
             mockRequests.push({...decision.transaction, _id: guid()});
             child.balance = decision.balance;
+            persistMockState();
             resolve(child);
         })
     }

@@ -32,6 +32,8 @@ Lazy growth settlement uses no scheduler or background invocation. A request tha
 
 Child reports are read models derived from the authorized transaction ledger after settling current growth. Approved purchase requests feed the spending summary; system-authored growth entries feed the interest-growth summary. Long-term Pretend Zone projections are pure domain calculations sampled into a bounded set of chart points and never write account or transaction data.
 
+The public portfolio deployment deliberately selects `MockClient`. Its fictional state and session are serialized to browser `sessionStorage`, which isolates each visitor and preserves direct refreshes within the same tab. It has an explicit reset operation and receives no MongoDB credentials. This is a showcase boundary, not a substitute for server-backed multi-family persistence.
+
 ## Current boundaries
 
 | Area | Location | Responsibility today |

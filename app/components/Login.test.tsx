@@ -1,15 +1,43 @@
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {AuthContext} from '@contexts/AuthContext';
+import {ClientModeContext} from '@contexts/ClientContext';
+import {ClientType} from "../enums/clientType";
 import Login from '@components/Login';
 
 describe('Login', () => {
+    it('offers one-click guardian and child entry in demo mode', async () => {
+        const mockLogin = jest.fn().mockResolvedValue(true);
+        const mockAuthContext = {
+            login: mockLogin,
+            register: jest.fn(),
+            logout: jest.fn(),
+            resetDemo: jest.fn(),
+            user: null,
+        };
+
+        render(
+            <ClientModeContext.Provider value={ClientType.Mock}>
+                <AuthContext.Provider value={mockAuthContext}>
+                    <Login/>
+                </AuthContext.Provider>
+            </ClientModeContext.Provider>
+        );
+
+        await userEvent.click(screen.getByRole('button', {name: /Try parent demo/}));
+        expect(mockLogin).toHaveBeenCalledWith({username: 'demo-parent', password: 'pass123'});
+
+        await userEvent.click(screen.getByRole('button', {name: /Try child demo/}));
+        expect(mockLogin).toHaveBeenCalledWith({username: 'demo-maya', password: 'pass123'});
+    });
+
     it('lets a guardian create an account', async () => {
         const mockRegister = jest.fn().mockResolvedValue({ok: true});
         const mockAuthContext = {
             login: jest.fn(),
             register: mockRegister,
             logout: jest.fn(),
+            resetDemo: jest.fn(),
             user: null,
         };
 
@@ -42,6 +70,7 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: mockLogout,
+            resetDemo: jest.fn(),
             user: mockUser
         };
 
@@ -75,6 +104,7 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: mockLogout,
+            resetDemo: jest.fn(),
             user: mockUser
         };
 
@@ -108,6 +138,7 @@ describe('Login', () => {
             login: mockLogin,
             register: jest.fn(),
             logout: mockLogout,
+            resetDemo: jest.fn(),
             user: mockUser
         };
 

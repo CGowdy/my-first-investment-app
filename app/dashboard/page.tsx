@@ -6,9 +6,12 @@ import ParentDashboard from "./parent-dashboard/ParentDashboard";
 import {AuthContext} from "@contexts/AuthContext";
 import {ChildAccount} from "@models/child-account";
 import Button from "@components/button/Button";
+import {ClientModeContext} from "@contexts/ClientContext";
+import {ClientType} from "../enums/clientType";
 
 export default function Dashboard() {
-	const {user} = useContext(AuthContext)!;
+	const {user, resetDemo} = useContext(AuthContext)!;
+	const demoEnabled = useContext(ClientModeContext) === ClientType.Mock;
 	const [preview, setPreview] = useState<{guardianId: string; child: ChildAccount} | null>(null);
 	const previewChild = preview && preview.guardianId === user?._id ? preview.child : null;
 
@@ -31,6 +34,10 @@ export default function Dashboard() {
 
 	return (
 		<div className={"w-full"}>
+			{demoEnabled && user ? <section className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-[var(--garden-brand)] bg-[var(--garden-brand-soft)] px-4 py-3 text-[var(--garden-text)]" aria-label="Demo workspace controls">
+				<div><strong className="block">Demo workspace</strong><span className="garden-muted text-sm">Fictional data · changes stay in this browser tab</span></div>
+				<Button variant="secondary" buttonText="Reset demo" onButtonPressed={() => void resetDemo()}/>
+			</section> : null}
 			{user ? null : <h1 className={"mb-4"}>Welcome to the Dashboard</h1>}
 			{renderUserStatus}
 		</div>

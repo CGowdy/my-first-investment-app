@@ -6,7 +6,11 @@ Parents use the app to manage child profiles, record balance changes, and review
 
 ## Current state
 
-This is an early Next.js prototype, not a production financial or child-account system. The main parent/child flow exists, backed by either in-memory mock data or MongoDB Atlas through the server-side MongoDB driver. Authentication and authorization are prototype-only and must be replaced before public use.
+This is an early Next.js prototype, not a production financial or child-account system. The main parent/child flow exists, backed by either an isolated browser demo or MongoDB Atlas through the server-side MongoDB driver. Mongo-backed authentication uses bcrypt password hashes, signed HttpOnly sessions, and family-scoped authorization; account recovery, rate limiting, and production operations still need explicit designs before the app stores real family data.
+
+## Public portfolio demo
+
+The public demo runs with `ENVIRONMENT=mock`. Visitors can enter a fictional parent or child experience with one click, and changes are stored only in that browser tab. Refreshing preserves the visitor's demo session; **Reset demo** restores the original fictional family. The deployed demo must not receive MongoDB credentials or connect to real family data.
 
 See:
 
@@ -52,7 +56,7 @@ The mock accounts currently defined in `app/clients/mockClient.ts` are:
 | Parent manual tester | `test-adult` | `test-pass-123` |
 | Child manual tester | `test-child` | `test-pass-123` |
 
-These are public development fixtures, not credentials suitable for a deployed environment.
+These are public development fixtures. The portfolio demo exposes one-click entry for `parent1` and `child1`; they are not credentials suitable for a Mongo-backed environment.
 
 Guardian accounts can also be created from the dashboard sign-in card. A signed-in guardian creates child access from **Create Child Account**, which keeps the child linked to the correct family. To create or reset the same `test-adult` and `test-child` fixtures in the configured MongoDB development database, run:
 

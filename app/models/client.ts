@@ -10,6 +10,7 @@ export default interface IClient {
     registerGuardian(registration: GuardianRegistrationData): Promise<AuthenticatedAccount>;
     getSession(): Promise<AuthenticatedAccount | null>;
     logout(): Promise<void>;
+    resetDemo?(): Promise<void>;
 
     //Child CRUD
     addChildUser(childData: CreateChildAccountInput, options?:Option): Promise<ChildAccount | null>;
