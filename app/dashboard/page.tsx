@@ -1,5 +1,5 @@
 'use client'
-import {useContext, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import Login from "../components/Login";
 import ChildDashboard from "./child-dashboard/ChildDashboard";
 import ParentDashboard from "./parent-dashboard/ParentDashboard";
@@ -9,6 +9,7 @@ import Button from "@components/button/Button";
 import {ClientContext, ClientModeContext} from "@contexts/ClientContext";
 import {ClientType} from "../enums/clientType";
 import type IClient from "@models/client";
+import {useRouter} from "next/navigation";
 
 type ResettableDemoClient = IClient & {resetDemo: () => Promise<void>};
 
@@ -17,15 +18,32 @@ function canResetDemo(client: IClient | null): client is ResettableDemoClient {
 }
 
 export default function Dashboard() {
-	const {user} = useContext(AuthContext)!;
+	const {user, login, logout} = useContext(AuthContext)!;
 	const client = useContext(ClientContext);
 	const demoEnabled = useContext(ClientModeContext) === ClientType.Mock;
+	const automaticDemoStarted = useRef(false);
+	const router = useRouter();
 	const [preview, setPreview] = useState<{guardianId: string; child: ChildAccount} | null>(null);
 	const previewChild = preview && preview.guardianId === user?._id ? preview.child : null;
 	const resetDemo = async () => {
 		if (canResetDemo(client)) await client.resetDemo();
-		window.location.assign("/dashboard");
+		await logout();
+		router.replace("/dashboard");
 	};
+
+	useEffect(() => {
+		if (!demoEnabled || user || automaticDemoStarted.current) return;
+		const demoRole = new URLSearchParams(window.location.search).get("demo");
+		if (demoRole !== "parent" && demoRole !== "child") return;
+		automaticDemoStarted.current = true;
+		void login({
+			username: demoRole === "parent" ? "demo-parent" : "demo-maya",
+			password: "pass123",
+		}).then(loginSucceeded => {
+			if (loginSucceeded) window.history.replaceState(null, "", "/dashboard");
+			else automaticDemoStarted.current = false;
+		});
+	}, [demoEnabled, login, user]);
 
 	const renderUserStatus = user
 	?	<div className={"mx-2 lg:mx-0 lg:w-full"}>

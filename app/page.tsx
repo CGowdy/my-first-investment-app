@@ -16,8 +16,8 @@ export default function Home() {
                 <h1 className="mt-3 text-5xl font-semibold leading-[1.02] tracking-tight md:text-7xl">Help money lessons <span className="text-[var(--garden-brand)]">take root.</span></h1>
                 <p className="garden-muted mt-6 max-w-2xl text-lg leading-8 md:text-xl">Give children a safe place to practice saving, budgeting, simulated growth, and thoughtful spending—with a parent guiding every real-world decision.</p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                    <Link href="/dashboard" className="rounded-full bg-[var(--garden-action)] px-6 py-3 font-bold text-[var(--garden-action-text)] transition hover:-translate-y-0.5 hover:shadow-lg">Open the interactive demo</Link>
-                    <a href="#how-it-works" className="rounded-full border-2 border-[var(--garden-border)] bg-[var(--garden-surface)] px-6 py-3 font-bold transition hover:bg-[var(--garden-brand-soft)]">See how it works</a>
+                    <Link href="/dashboard?demo=parent" className="rounded-full bg-[var(--garden-action)] px-6 py-3 font-bold text-[var(--garden-action-text)] transition hover:-translate-y-0.5 hover:shadow-lg">Explore as a parent</Link>
+                    <Link href="/dashboard?demo=child" className="rounded-full border-2 border-[var(--garden-save)] bg-[var(--garden-save-soft)] px-6 py-3 font-bold text-[var(--garden-save)] transition hover:-translate-y-0.5 hover:shadow-lg">Explore as a child</Link>
                 </div>
                 <p className="garden-muted mt-4 text-sm">No signup required for the demo. All names and balances are fictional.</p>
             </div>
@@ -36,7 +36,7 @@ export default function Home() {
 
         <section className="garden-card flex flex-col items-start justify-between gap-6 border-[3px] p-7 md:flex-row md:items-center md:p-9">
             <div><p className="garden-kicker">Ready to explore?</p><h2 className="mt-1 text-3xl font-semibold">Step into a fictional family dashboard.</h2><p className="garden-muted mt-2">Try both the parent and child experience, approve requests, and experiment with compound growth.</p></div>
-            <Link href="/dashboard" className="shrink-0 rounded-full bg-[var(--garden-action)] px-6 py-3 font-bold text-[var(--garden-action-text)]">Launch demo</Link>
+            <Link href="/dashboard" className="shrink-0 rounded-full bg-[var(--garden-action)] px-6 py-3 font-bold text-[var(--garden-action-text)]">Choose a demo role</Link>
         </section>
     </main>;
 }
