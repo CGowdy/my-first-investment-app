@@ -32,18 +32,25 @@ export default function Dashboard() {
 	};
 
 	useEffect(() => {
-		if (!demoEnabled || user || automaticDemoStarted.current) return;
+		if (!demoEnabled || automaticDemoStarted.current) return;
 		const demoRole = new URLSearchParams(window.location.search).get("demo");
 		if (demoRole !== "parent" && demoRole !== "child") return;
+		const requestedChildRole = demoRole === "child";
+		if (user?.isChildAccount === requestedChildRole) {
+			window.history.replaceState(null, "", "/dashboard");
+			return;
+		}
 		automaticDemoStarted.current = true;
-		void login({
-			username: demoRole === "parent" ? "demo-parent" : "demo-maya",
-			password: "pass123",
-		}).then(loginSucceeded => {
+		void (async () => {
+			if (user) await logout();
+			const loginSucceeded = await login({
+				username: demoRole === "parent" ? "demo-parent" : "demo-maya",
+				password: "pass123",
+			});
 			if (loginSucceeded) window.history.replaceState(null, "", "/dashboard");
 			else automaticDemoStarted.current = false;
-		});
-	}, [demoEnabled, login, user]);
+		})();
+	}, [demoEnabled, login, logout, user]);
 
 	const renderUserStatus = user
 	?	<div className={"mx-2 lg:mx-0 lg:w-full"}>

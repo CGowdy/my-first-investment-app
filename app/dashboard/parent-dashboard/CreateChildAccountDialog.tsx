@@ -97,7 +97,10 @@ export const CreateChildAccountDialog: React.FC<CreateChildAccountDialogProps> =
                                     className={'rounded-t-none'}
                                     footerDisplay={"%"}/>
                             </div>
-                            <Button buttonText={'Create Account'} onButtonPressed={handleOnCreate}/>
+                            <div className="mt-4 flex justify-end gap-2">
+                                <Button variant="secondary" buttonText={'Cancel'} onButtonPressed={onRequestClose}/>
+                                <Button buttonText={'Create Account'} onButtonPressed={handleOnCreate}/>
+                            </div>
                             {error && <p role="alert" className="text-red-400">{error}</p>}
                         </div>
                     </Dialog.Panel>
